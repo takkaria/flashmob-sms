@@ -1,0 +1,27 @@
+{
+  "name": "flashmob-sms",
+  "version": "0.0.1",
+  "description": "SMS hotline for flashmobs using Clockwork SMS",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "test": "mocha"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/takkaria/flashmob-sms.git"
+  },
+  "keywords": [
+    "sms",
+    "flashmob"
+  ],
+  "author": "Andi Sidwell <andi@takkaria.org>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/takkaria/flashmob-sms/issues"
+  },
+  "homepage": "https://github.com/takkaria/flashmob-sms#readme",
+  "dependencies": {
+    "express": "^4.13.4"
+  }
+}
