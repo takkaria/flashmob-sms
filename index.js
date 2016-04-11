@@ -58,15 +58,14 @@ app.post('/', function (req, res) {
 function start(fn) {
 	const port = process.env.PORT || 3000;
 	app.listen(port, function () {
-		console.log('Listening on port ' + port);
 		if (fn) {
-			fn();
+			fn(null, port);
 		}
 	});
 }
 
 if (require.main === module) {
-	start();
+	start((err, port) => console.log('Listening on port ' + port));
 }
 
 module.exports = start;
