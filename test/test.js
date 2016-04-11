@@ -23,6 +23,9 @@ before(function(done) {
 const phoneNumber = '4479677777222';
 
 function sendSMS(params) {
+	params = params || {};
+	params.from = params.from || phoneNumber;
+
 	return request.post({
 		url: appUrl,
 		form: params
@@ -49,9 +52,7 @@ describe('If I send an SMS', function() {
 		it('I should receive a reply', function(done) {
 			let responseSMS = apiExpect({ to: phoneNumber });
 
-			sendSMS({
-					from: phoneNumber
-				})
+			sendSMS()
 				.on('error', done)
 				.on('response', response => {
 					expect(responseSMS.isDone()).to.equal(true);
@@ -72,10 +73,7 @@ describe('If I send an SMS', function() {
 			it('it should be treated as an empty text & I should receive a reply', function(done) {
 				let responseSMS = apiExpect({ content: 'Testing' }); // XXX this is a magic constant
 
-				sendSMS({
-						from: phoneNumber,
-						content: 'update ' + newMessage
-					})
+				sendSMS({ content: 'update ' + newMessage })
 					.on('error', done)
 					.on('response', response => {
 						expect(responseSMS.isDone()).to.equal(true);
@@ -93,10 +91,7 @@ describe('If I send an SMS', function() {
 			it('I should receive confirmation of change', function(done) {
 				let confirmationSMS = apiExpect(body => body.content.includes(newMessage));
 
-				sendSMS({
-						from: phoneNumber,
-						content: 'update ' + newMessage
-					})
+				sendSMS({ content: 'update ' + newMessage })
 					.on('error', done)
 					.on('response', response => {
 						expect(confirmationSMS.isDone()).to.equal(true);
@@ -108,9 +103,7 @@ describe('If I send an SMS', function() {
 			it('sending another SMS should get me the new message', function(done) {
 				let confirmationSMS = apiExpect({ content: newMessage });
 
-				sendSMS({
-						from: phoneNumber
-					})
+				return sendSMS()
 					.on('error', done)
 					.on('response', response => {
 						expect(confirmationSMS.isDone()).to.equal(true);
