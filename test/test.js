@@ -80,7 +80,7 @@ describe('If I send an SMS', function() {
 		})
 
 		it('sending another SMS should get me the new message', function(done) {
-			let confirmationSMS = apiExpect(body => body.content.includes(newMessage));
+			let confirmationSMS = apiExpect({ content: newMessage });
 
 			sendSMS({
 					from: phoneNumber

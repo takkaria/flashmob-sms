@@ -22,10 +22,12 @@ function getKeyword(str) {
 }
 
 app.post('/', function (req, res) {
-	let keyword = getKeyword(req.body.content);
+	let incomingMsg = req.body.content;
+	let keyword = getKeyword(incomingMsg);
 
 	if (keyword == 'update') {
-		responseText = req.body.content;
+		// Extract from after the space after 'update'
+		responseText = incomingMsg.substr(7);
 	}
 
 	request
