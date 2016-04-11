@@ -64,33 +64,62 @@ describe('If I send an SMS', function() {
 	describe('starting with "update"', function() {
 		const newMessage = 'Testing 1234';
 
-		it('I should receive confirmation of change', function(done) {
-			let confirmationSMS = apiExpect(body => body.content.includes(newMessage));
+		describe('when my number is not on the allowed list', function() {
+			before(function() {
+				process.env.ALLOWED_NUMBERS = '';
+			})
 
-			sendSMS({
-					from: phoneNumber,
-					content: 'update ' + newMessage
-				})
-				.on('error', done)
-				.on('response', response => {
-					expect(confirmationSMS.isDone()).to.equal(true);
-					expect(response.statusCode).to.equal(200);
-					done();
-				});
+			it('it should be treated as an empty text & I should receive a reply', function(done) {
+				let responseSMS = apiExpect({ content: 'Testing' }); // XXX this is a magic constant
+
+				sendSMS({
+						from: phoneNumber,
+						content: 'update ' + newMessage
+					})
+					.on('error', done)
+					.on('response', response => {
+						expect(responseSMS.isDone()).to.equal(true);
+						expect(response.statusCode).to.equal(200);
+						done();
+					});
+			})
 		})
 
-		it('sending another SMS should get me the new message', function(done) {
-			let confirmationSMS = apiExpect({ content: newMessage });
+		describe('when my number is on the allowed list', function() {
+			before(function() {
+				process.env.ALLOWED_NUMBERS = phoneNumber;
+			})
 
-			sendSMS({
-					from: phoneNumber
-				})
-				.on('error', done)
-				.on('response', response => {
-					expect(confirmationSMS.isDone()).to.equal(true);
-					expect(response.statusCode).to.equal(200);
-					done();
-				});
+			it('I should receive confirmation of change', function(done) {
+				let confirmationSMS = apiExpect(body => body.content.includes(newMessage));
+
+				sendSMS({
+						from: phoneNumber,
+						content: 'update ' + newMessage
+					})
+					.on('error', done)
+					.on('response', response => {
+						expect(confirmationSMS.isDone()).to.equal(true);
+						expect(response.statusCode).to.equal(200);
+						done();
+					});
+			})
+
+			it('sending another SMS should get me the new message', function(done) {
+				let confirmationSMS = apiExpect({ content: newMessage });
+
+				sendSMS({
+						from: phoneNumber
+					})
+					.on('error', done)
+					.on('response', response => {
+						expect(confirmationSMS.isDone()).to.equal(true);
+						expect(response.statusCode).to.equal(200);
+						done();
+					});
+			})
 		})
+
 	})
+
 })

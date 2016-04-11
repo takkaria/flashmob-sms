@@ -14,6 +14,9 @@ app.use(bodyParser.urlencoded({ extended: false }))
 
 let responseText = 'Testing';
 
+if (!process.env.ALLOWED_NUMBERS)
+	process.env.ALLOWED_NUMBERS = '';
+
 function getKeyword(str) {
 	if (str) {
 		let arr = str.split(' ');
@@ -21,13 +24,20 @@ function getKeyword(str) {
 	}
 }
 
-app.post('/', function (req, res) {
-	let incomingMsg = req.body.content;
-	let keyword = getKeyword(incomingMsg);
+function checkAccess(from) {
+	return process.env.ALLOWED_NUMBERS.includes(from);
+}
 
-	if (keyword == 'update') {
-		// Extract from after the space after 'update'
-		responseText = incomingMsg.substr(7);
+app.post('/', function (req, res) {
+
+	if (checkAccess(req.body.from)) {
+		let incomingMsg = req.body.content;
+		let keyword = getKeyword(incomingMsg);
+
+		if (keyword == 'update') {
+			// Extract from after the space after 'update'
+			responseText = incomingMsg.substr(7);
+		}
 	}
 
 	request
