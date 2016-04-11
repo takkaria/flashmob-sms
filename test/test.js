@@ -20,18 +20,26 @@ describe('a request to /', function() {
 		nock.cleanAll();
 	})
 
-	it('should trigger a request to send a message', function(done) {
+	it('should send a message back to the sender', function(done) {
+		const phoneNumber = '4479677777222';
+
 		let apiCall = nock('https://api.clockworksms.com')
-			.post('/http/send.aspx')
-			.reply(200, 'OK');
+			.post('/http/send.aspx', {
+				to: phoneNumber
+			})
+			.reply(200, 'To ' + phoneNumber + ' AB_12345');
 
 		request
 			.post({
-				url: appUrl
+				url: appUrl,
+				form: {
+					from: phoneNumber
+				}
 			})
 			.on('error', done)
 			.on('response', response => {
 				expect(apiCall.isDone()).to.equal(true);
+				expect(response.statusCode).to.equal(200);
 				done();
 			});
 	});
