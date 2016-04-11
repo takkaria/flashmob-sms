@@ -1,13 +1,31 @@
 'use strict';
 
-var express = require('express');
-var app = express();
+const express = require('express');
+const request = require('request');
 
-app.get('/', function (req, res) {
-	res.send('Hello World!');
+const app = express();
+
+app.post('/', function (req, res) {
+	request
+		.post('https://api.clockworksms.com/http/send.aspx')
+		.on('response', response => {
+			res.status(200);
+			res.send('OK');
+		});
 });
 
-let port = process.env.PORT || 3000;
-app.listen(port, function () {
-	console.log('Listening on port ' + port);
-});
+function start(fn) {
+	const port = process.env.PORT || 3000;
+	app.listen(port, function () {
+		console.log('Listening on port ' + port);
+		if (fn) {
+			fn();
+		}
+	});
+}
+
+if (require.main === module) {
+	start();
+}
+
+module.exports = start;
