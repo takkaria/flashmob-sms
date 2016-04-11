@@ -5,10 +5,22 @@ const request = require('request');
 const expect = chai.expect;
 const nock = require('nock');
 
+
+// ====== App init
+
 const appPort = 4000;
 const appUrl = 'http://localhost:' + appPort + '/';
-const app = require('../index');
 
+before(function(done) {
+	process.env.PORT = appPort;
+	const app = require('../index');
+	app(done);
+});
+
+
+// ====== Test helpers
+
+const phoneNumber = '4479677777222';
 
 function sendSMS(params) {
 	return request.post({
@@ -17,33 +29,32 @@ function sendSMS(params) {
 	});
 }
 
+function apiExpect(param) {
+	let apiCall = nock('https://api.clockworksms.com')
+		.post('/http/send.aspx', param)
+		.reply(200, 'To ' + phoneNumber + ' AB_12345');
 
-before(function(done) {
-	process.env.PORT = appPort;
-	app(done);
-});
+	return apiCall;
+}
 
-describe('an incoming message', function() {
-	const phoneNumber = '4479677777222';
 
+// ====== Testing proper
+
+describe('If I send an SMS', function() {
 	afterEach(function() {
 		nock.cleanAll();
 	})
 
 	describe('with no text content', function() {
-		it('should reply to the sender', function(done) {
-			let apiCall = nock('https://api.clockworksms.com')
-				.post('/http/send.aspx', {
-					to: phoneNumber
-				})
-				.reply(200, 'To ' + phoneNumber + ' AB_12345');
+		it('I should receive a reply', function(done) {
+			let responseSMS = apiExpect({ to: phoneNumber });
 
 			sendSMS({
 					from: phoneNumber
 				})
 				.on('error', done)
 				.on('response', response => {
-					expect(apiCall.isDone()).to.equal(true);
+					expect(responseSMS.isDone()).to.equal(true);
 					expect(response.statusCode).to.equal(200);
 					done();
 				});
@@ -53,10 +64,8 @@ describe('an incoming message', function() {
 	describe('starting with "update"', function() {
 		const newMessage = 'Testing 1234';
 
-		it('should reply with confirmation of change', function(done) {
-			let confirmationSMS = nock('https://api.clockworksms.com')
-				.post('/http/send.aspx', body => body.content.includes(newMessage))
-				.reply(200, 'To ' + phoneNumber + ' AB_12345');
+		it('I should receive confirmation of change', function(done) {
+			let confirmationSMS = apiExpect(body => body.content.includes(newMessage));
 
 			sendSMS({
 					from: phoneNumber,
@@ -64,30 +73,24 @@ describe('an incoming message', function() {
 				})
 				.on('error', done)
 				.on('response', response => {
-					expect(response.statusCode).to.equal(200);
 					expect(confirmationSMS.isDone()).to.equal(true);
+					expect(response.statusCode).to.equal(200);
+					done();
+				});
+		})
+
+		it('sending another SMS should get me the new message', function(done) {
+			let confirmationSMS = apiExpect(body => body.content.includes(newMessage));
+
+			sendSMS({
+					from: phoneNumber
+				})
+				.on('error', done)
+				.on('response', response => {
+					expect(confirmationSMS.isDone()).to.equal(true);
+					expect(response.statusCode).to.equal(200);
 					done();
 				});
 		})
 	})
-
 })
-
-
-/*
-request
-	.post({
-		url: '',
-		form: {
-			to: 'xxx',
-			from: 'xxx',
-			content: 'xxx',
-			id: 'xxx',
-			keyword: 'xxx'
-		}
-	})
-	.on('error', done)
-	.on('response', response => {
-		expect(response.statusCode).to.equal(200);
-	});
-*/

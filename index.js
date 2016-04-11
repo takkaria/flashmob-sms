@@ -4,8 +4,15 @@ const express = require('express');
 const bodyParser = require('body-parser')
 const request = require('request');
 
+// ====== Init Express
+
 const app = express();
 app.use(bodyParser.urlencoded({ extended: false }))
+
+
+// ====== App code
+
+let responseText = 'Testing';
 
 function getKeyword(str) {
 	if (str) {
@@ -16,7 +23,6 @@ function getKeyword(str) {
 
 app.post('/', function (req, res) {
 	let keyword = getKeyword(req.body.content);
-	let responseText;
 
 	if (keyword == 'update') {
 		responseText = req.body.content;
@@ -33,6 +39,9 @@ app.post('/', function (req, res) {
 			res.send('OK');
 		});
 });
+
+
+// ====== Either run (if run directly) or export as a module
 
 function start(fn) {
 	const port = process.env.PORT || 3000;
