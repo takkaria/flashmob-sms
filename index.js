@@ -4,6 +4,8 @@ const express = require('express');
 const bodyParser = require('body-parser')
 const request = require('request');
 const ip = require('ip');
+const debug = require('debug')('flashmob-sms');
+
 
 // ====== Initialisation
 
@@ -55,10 +57,8 @@ function checkAccess(from) {
 }
 
 function success(res) {
-	return () => {
-		res.status(200);
-		res.send('OK');
-	}
+	res.status(200);
+	res.send('OK');
 }
 
 app.post('/', function (req, res) {
@@ -66,6 +66,7 @@ app.post('/', function (req, res) {
 	// Restrict requests to only those specified by Clockwork
 	// https://www.clockworksms.com/doc/reference/faqs/our-ip-addresses/
 	if (process.env.RESTRICT_IP === '1' && !checkIP(req)) {
+		debug('IP address ' + req.ip + ' rejected.');
 		res.status(401);
 		res.send('Access denied');
 		return;
@@ -75,9 +76,14 @@ app.post('/', function (req, res) {
 	if (responseOn)
 		message = responseText;
 
+	debug('Received message from ' + req.body.from);
+	debug('Message body: ', req.body.content);
+
 	if (checkAccess(req.body.from)) {
 		let incomingMsg = req.body.content;
 		let keyword = getKeyword(incomingMsg);
+
+		debug('Checking keyword');
 
 		if (keyword == 'update') {
 			// Extract from after the space after 'update'
@@ -90,9 +96,13 @@ app.post('/', function (req, res) {
 			responseOn = false;
 			message = 'Auto-responder now turned off';
 		}
+
+		debug(message);
 	}
 
 	if (message) {
+		debug('Trying to send reply...');
+
 		request
 			.post('https://api.clockworksms.com/http/send.aspx')
 			.form({
@@ -101,9 +111,16 @@ app.post('/', function (req, res) {
 				long: 1,
 				content: message
 			})
-			.on('response', success(res));
+			.on('error', (err) => {
+				debug(err);
+			})
+			.on('response', () => {
+				debug('Sent message to ' + req.body.from + '.')
+				success(res);
+			});
 	} else {
-		success(res)();
+		debug('Message from ' + req.body.from + ' ignored as responses turned off.')
+		success(res);
 	}
 });
 
