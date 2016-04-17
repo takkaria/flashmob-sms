@@ -4,19 +4,19 @@ const express = require('express');
 const bodyParser = require('body-parser')
 const request = require('request');
 
-// ====== Init Express
+// ====== Initialisation
 
 const app = express();
 app.use(bodyParser.urlencoded({ extended: false }))
+
+if (!process.env.ALLOWED_NUMBERS)
+	process.env.ALLOWED_NUMBERS = '';
 
 
 // ====== App code
 
 let responseText = 'Testing';
 let responseOn = false;
-
-if (!process.env.ALLOWED_NUMBERS)
-	process.env.ALLOWED_NUMBERS = '';
 
 function getKeyword(str) {
 	if (str) {
@@ -29,12 +29,14 @@ function checkAccess(from) {
 	return process.env.ALLOWED_NUMBERS.includes(from);
 }
 
-app.post('/', function (req, res) {
-
-	const success = () => {
+function success(res) {
+	return () => {
 		res.status(200);
 		res.send('OK');
-	};
+	}
+}
+
+app.post('/', function (req, res) {
 
 	let message;
 	if (responseOn)
@@ -64,9 +66,9 @@ app.post('/', function (req, res) {
 				to: req.body.from,
 				content: message
 			})
-			.on('response', success);
+			.on('response', success(res));
 	} else {
-		success();
+		success(res)();
 	}
 });
 
