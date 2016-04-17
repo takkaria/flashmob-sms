@@ -93,6 +93,19 @@ describe('If I send an SMS', function() {
 				});
 		})
 
+		// This test is identical to the one above except with a 'keyword' added
+		it('(with shortcode) I should receive confirmation of change', function(done) {
+			let confirmationSMS = apiExpect({ content: /on/ });
+
+			sendSMS({ keyword: 'keyword', content: 'keyword on' })
+				.on('error', done)
+				.on('response', response => {
+					expect(confirmationSMS.isDone()).to.equal(true);
+					expect(response.statusCode).to.equal(200);
+					done();
+				});
+		})
+
 		it('sending another SMS should get me a message', function(done) {
 			let responseSMS = apiExpect();
 

@@ -31,10 +31,19 @@ app.set('trust proxy', true);
 let responseText = 'Testing';
 let responseOn = false;
 
-function getKeyword(str) {
+function getKeyword(str, shortcodeText) {
+	let start = 0;
+
+	// If we have shortcodeText, it means the message is of the form
+	// 'keyword <command>'.  So we ignore the first token in the string
+	// and instead jump ahead.
+	if (shortcodeText) {
+		start = 1;
+	}
+
 	if (str) {
 		let arr = str.split(' ');
-		return arr[0];
+		return arr[start];
 	}
 }
 
@@ -81,7 +90,7 @@ app.post('/', function (req, res) {
 
 	if (checkAccess(req.body.from)) {
 		let incomingMsg = req.body.content;
-		let keyword = getKeyword(incomingMsg);
+		let keyword = getKeyword(incomingMsg, req.body.keyword);
 
 		debug('Checking keyword');
 
