@@ -10,9 +10,11 @@ const nock = require('nock');
 
 const appPort = 4000;
 const appUrl = 'http://localhost:' + appPort + '/';
+const appApiKey = 'testing';
 
 before(function(done) {
 	process.env.PORT = appPort;
+	process.env.API_KEY = appApiKey;
 	const app = require('../index');
 	app(done);
 });
@@ -33,6 +35,9 @@ function sendSMS(params) {
 }
 
 function apiExpect(param) {
+	param = param || {};
+	param.key = appApiKey;
+
 	let apiCall = nock('https://api.clockworksms.com')
 		.post('/http/send.aspx', param)
 		.reply(200, 'To ' + phoneNumber + ' AB_12345');
@@ -55,7 +60,7 @@ describe('If I send an SMS', function() {
 		})
 
 		it('I should receive confirmation of change', function(done) {
-			let confirmationSMS = apiExpect(body => body.content.includes('on'));
+			let confirmationSMS = apiExpect({ content: /on/ });
 
 			sendSMS({ content: 'on' })
 				.on('error', done)
@@ -86,7 +91,7 @@ describe('If I send an SMS', function() {
 		})
 
 		it('I should receive confirmation of change', function(done) {
-			let confirmationSMS = apiExpect(body => body.content.includes('off'));
+			let confirmationSMS = apiExpect({ content: /off/ });
 
 			sendSMS({ content: 'off' })
 				.on('error', done)
@@ -147,7 +152,7 @@ describe('If I send an SMS', function() {
 			})
 
 			it('I should receive confirmation of change', function(done) {
-				let confirmationSMS = apiExpect(body => body.content.includes(newMessage));
+				let confirmationSMS = apiExpect({ content: /updated/ });
 
 				sendSMS({ content: 'update ' + newMessage })
 					.on('error', done)

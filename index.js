@@ -6,11 +6,18 @@ const request = require('request');
 
 // ====== Initialisation
 
+function abort(text) {
+	console.log('ERROR: ', text);
+	process.exit(1);
+}
+
 const app = express();
 app.use(bodyParser.urlencoded({ extended: false }))
 
 if (!process.env.ALLOWED_NUMBERS)
 	process.env.ALLOWED_NUMBERS = '';
+if (!process.env.API_KEY)
+	abort('No API key specified - aborting')
 
 
 // ====== App code
@@ -63,6 +70,7 @@ app.post('/', function (req, res) {
 		request
 			.post('https://api.clockworksms.com/http/send.aspx')
 			.form({
+				key: process.env.API_KEY,
 				to: req.body.from,
 				content: message
 			})
