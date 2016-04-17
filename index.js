@@ -20,6 +20,9 @@ if (!process.env.ALLOWED_NUMBERS)
 if (!process.env.API_KEY)
 	abort('No API key specified - aborting')
 
+// Enabled as we're deploying on Heroku
+app.set('trust proxy', true);
+
 
 // ====== App code
 
