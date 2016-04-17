@@ -13,6 +13,7 @@ app.use(bodyParser.urlencoded({ extended: false }))
 // ====== App code
 
 let responseText = 'Testing';
+let responseOn = false;
 
 if (!process.env.ALLOWED_NUMBERS)
 	process.env.ALLOWED_NUMBERS = '';
@@ -30,6 +31,10 @@ function checkAccess(from) {
 
 app.post('/', function (req, res) {
 
+	let message;
+	if (responseOn)
+		message = responseText;
+
 	if (checkAccess(req.body.from)) {
 		let incomingMsg = req.body.content;
 		let keyword = getKeyword(incomingMsg);
@@ -37,19 +42,25 @@ app.post('/', function (req, res) {
 		if (keyword == 'update') {
 			// Extract from after the space after 'update'
 			responseText = incomingMsg.substr(7);
+			message = 'Messaage updated to: ' + responseText;
+		} else if (keyword == 'on') {
+			responseOn = true;
+			message = 'Auto-responder now turned on';
 		}
 	}
 
-	request
-		.post('https://api.clockworksms.com/http/send.aspx')
-		.form({
-			to: req.body.from,
-			content: responseText
-		})
-		.on('response', response => {
-			res.status(200);
-			res.send('OK');
-		});
+	if (message) {
+		request
+			.post('https://api.clockworksms.com/http/send.aspx')
+			.form({
+				to: req.body.from,
+				content: message
+			})
+			.on('response', response => {
+				res.status(200);
+				res.send('OK');
+			});
+	}
 });
 
 

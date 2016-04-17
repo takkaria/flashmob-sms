@@ -48,11 +48,28 @@ describe('If I send an SMS', function() {
 		nock.cleanAll();
 	})
 
-	describe('with no text content', function() {
-		it('I should receive a reply', function(done) {
-			let responseSMS = apiExpect({ to: phoneNumber });
+	describe('starting with "on"', function() {
+		it('(assuming the number is on the allowed list)')
+		before(function() {
+			process.env.ALLOWED_NUMBERS = phoneNumber;
+		})
 
-			sendSMS()
+		it('I should receive confirmation of change', function(done) {
+			let confirmationSMS = apiExpect(body => body.content.includes('on'));
+
+			sendSMS({ content: 'on' })
+				.on('error', done)
+				.on('response', response => {
+					expect(confirmationSMS.isDone()).to.equal(true);
+					expect(response.statusCode).to.equal(200);
+					done();
+				});
+		})
+
+		it('sending another SMS should get me a message', function(done) {
+			let responseSMS = apiExpect();
+
+			return sendSMS()
 				.on('error', done)
 				.on('response', response => {
 					expect(responseSMS.isDone()).to.equal(true);
@@ -101,12 +118,12 @@ describe('If I send an SMS', function() {
 			})
 
 			it('sending another SMS should get me the new message', function(done) {
-				let confirmationSMS = apiExpect({ content: newMessage });
+				let responseSMS = apiExpect({ content: newMessage });
 
 				return sendSMS()
 					.on('error', done)
 					.on('response', response => {
-						expect(confirmationSMS.isDone()).to.equal(true);
+						expect(responseSMS.isDone()).to.equal(true);
 						expect(response.statusCode).to.equal(200);
 						done();
 					});
