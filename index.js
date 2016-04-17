@@ -56,7 +56,7 @@ app.post('/', function (req, res) {
 		if (keyword == 'update') {
 			// Extract from after the space after 'update'
 			responseText = incomingMsg.substr(7);
-			message = 'Messaage updated to: ' + responseText;
+			message = 'Message updated to: ' + responseText;
 		} else if (keyword == 'on') {
 			responseOn = true;
 			message = 'Auto-responder now turned on';
