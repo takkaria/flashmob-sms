@@ -31,6 +31,11 @@ function checkAccess(from) {
 
 app.post('/', function (req, res) {
 
+	const success = () => {
+		res.status(200);
+		res.send('OK');
+	};
+
 	let message;
 	if (responseOn)
 		message = responseText;
@@ -46,6 +51,9 @@ app.post('/', function (req, res) {
 		} else if (keyword == 'on') {
 			responseOn = true;
 			message = 'Auto-responder now turned on';
+		} else if (keyword == 'off') {
+			responseOn = false;
+			message = 'Auto-responder now turned off';
 		}
 	}
 
@@ -56,10 +64,9 @@ app.post('/', function (req, res) {
 				to: req.body.from,
 				content: message
 			})
-			.on('response', response => {
-				res.status(200);
-				res.send('OK');
-			});
+			.on('response', success);
+	} else {
+		success();
 	}
 });
 

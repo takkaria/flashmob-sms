@@ -79,8 +79,49 @@ describe('If I send an SMS', function() {
 		})
 	})
 
+	describe('starting with "off"', function() {
+		it('(assuming the number is on the allowed list)')
+		before(function() {
+			process.env.ALLOWED_NUMBERS = phoneNumber;
+		})
+
+		it('I should receive confirmation of change', function(done) {
+			let confirmationSMS = apiExpect(body => body.content.includes('off'));
+
+			sendSMS({ content: 'off' })
+				.on('error', done)
+				.on('response', response => {
+					expect(confirmationSMS.isDone()).to.equal(true);
+					expect(response.statusCode).to.equal(200);
+					done();
+				});
+		})
+
+		it('sending another SMS should get me no message', function(done) {
+			let responseSMS = apiExpect();
+
+			return sendSMS()
+				.on('error', done)
+				.on('response', response => {
+					expect(responseSMS.isDone()).to.equal(false);
+					expect(response.statusCode).to.equal(200);
+					done();
+				});
+		})
+	})
+
 	describe('starting with "update"', function() {
 		const newMessage = 'Testing 1234';
+
+		it('(assuming responses are turned on)')
+		before(function(done) {
+			sendSMS({ content: 'on' })
+				.on('error', done)
+				.on('response', response => {
+					expect(response.statusCode).to.equal(200);
+					done();
+				});
+		})
 
 		describe('when my number is not on the allowed list', function() {
 			before(function() {
