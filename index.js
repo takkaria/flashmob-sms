@@ -72,6 +72,7 @@ app.post('/', function (req, res) {
 			.form({
 				key: process.env.API_KEY,
 				to: req.body.from,
+				long: 1,
 				content: message
 			})
 			.on('response', success(res));
