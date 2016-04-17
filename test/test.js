@@ -48,6 +48,28 @@ function apiExpect(param) {
 
 // ====== Testing proper
 
+describe('If I post to the endpoint', function() {
+	it('(assuming RESTRICT_IP=1) I should receive an error', function(done) {
+		process.env.RESTRICT_IP = 1;
+		sendSMS()
+			.on('error', done)
+			.on('response', response => {
+				expect(response.statusCode).to.equal(401);
+				done();
+			});
+	})
+
+	it('(assuming RESTRICT_IP=0) I should not receive an error', function(done) {
+		process.env.RESTRICT_IP = 0;
+		sendSMS()
+			.on('error', done)
+			.on('response', response => {
+				expect(response.statusCode).to.equal(200);
+				done();
+			});
+	})
+})
+
 describe('If I send an SMS', function() {
 	afterEach(function() {
 		nock.cleanAll();

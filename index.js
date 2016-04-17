@@ -3,6 +3,7 @@
 const express = require('express');
 const bodyParser = require('body-parser')
 const request = require('request');
+const ip = require('ip');
 
 // ====== Initialisation
 
@@ -32,6 +33,20 @@ function getKeyword(str) {
 	}
 }
 
+const clockworkIPs = [
+	ip.cidrSubnet('89.248.48.192/27'),
+	ip.cidrSubnet('89.248.58.16/28')
+];
+function checkIP(req) {
+	for (let i = 0; i < clockworkIPs.length; i++) {
+		let mask = clockworkIPs[i];
+		if (mask.contains(req.ip))
+			return true;
+	}
+
+	return false;
+}
+
 function checkAccess(from) {
 	return process.env.ALLOWED_NUMBERS.includes(from);
 }
@@ -44,6 +59,14 @@ function success(res) {
 }
 
 app.post('/', function (req, res) {
+
+	// Restrict requests to only those specified by Clockwork
+	// https://www.clockworksms.com/doc/reference/faqs/our-ip-addresses/
+	if (process.env.RESTRICT_IP === '1' && !checkIP(req)) {
+		res.status(401);
+		res.send('Access denied');
+		return;
+	}
 
 	let message;
 	if (responseOn)
