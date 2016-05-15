@@ -96,6 +96,7 @@ app.post('/', function (req, res) {
 
 		if (keyword == 'update') {
 			// Extract from after the space after 'update'
+			// XXX This won't work when using a shortcode
 			responseText = incomingMsg.substr(7);
 			message = 'Message updated to: ' + responseText;
 		} else if (keyword == 'on') {
@@ -121,6 +122,7 @@ app.post('/', function (req, res) {
 				content: message
 			})
 			.on('error', (err) => {
+				// XXX Handle this better - give a 500 message?
 				debug(err);
 			})
 			.on('response', () => {
