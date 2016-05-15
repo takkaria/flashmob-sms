@@ -6,6 +6,7 @@ const request = require('request');
 const ip = require('ip');
 const debug = require('debug')('flashmob-sms');
 
+const numberStore = require('./lib/number-store')
 
 // ====== Initialisation
 
@@ -108,6 +109,9 @@ app.post('/', function (req, res) {
 		}
 
 		debug(message);
+	} else {
+		// Only add non-admin users to the number store
+		numberStore.saveNumber(req.body.from);
 	}
 
 	if (message) {
