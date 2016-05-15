@@ -88,7 +88,8 @@ describe('If I post to the endpoint', function() {
 	})
 })
 
-describe('If I send an SMS', function() {
+
+describe('Testing commands.  If I send an SMS', function() {
 	afterEach(function() {
 		nock.cleanAll();
 	})
@@ -214,3 +215,33 @@ describe('If I send an SMS', function() {
 	})
 
 })
+
+
+describe('Testing update distribution', function() {
+
+	turnOnResponses(it, before);
+
+	it('if I send an empty SMS from a non admin number', function(done) {
+		let responseSMS = expectSMS();
+		sendSMS()
+			.on('error', done)
+			.on('response', response => {
+				expect(responseSMS.isDone()).to.equal(true);
+				done();
+			})
+	})
+
+	it('and then update the message text, the update should be sent to the non admin number', function(done) {
+		let confirmationSMS = expectSMS({ to: adminNumber });
+		let updateSMS = expectSMS({ content: /amazingtime/, to: normalNumber });
+
+		sendSMS({ content: 'update amazingtime', from: adminNumber })
+			.on('error', done)
+			.on('response', response => {
+				expect(confirmationSMS.isDone()).to.equal(true);
+				expect(updateSMS.isDone()).to.equal(true);
+				done();
+			});
+	})
+})
+
