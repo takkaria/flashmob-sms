@@ -34,7 +34,7 @@ function sendSMS(params) {
 	});
 }
 
-function apiExpect(param) {
+function expectSMS(param) {
 	param = param || {};
 	param.key = appApiKey;
 
@@ -82,7 +82,7 @@ describe('If I send an SMS', function() {
 		})
 
 		it('I should receive confirmation of change', function(done) {
-			let confirmationSMS = apiExpect({ content: /on/ });
+			let confirmationSMS = expectSMS({ content: /on/ });
 
 			sendSMS({ content: 'on' })
 				.on('error', done)
@@ -95,7 +95,7 @@ describe('If I send an SMS', function() {
 
 		// This test is identical to the one above except with a 'keyword' added
 		it('(with shortcode) I should receive confirmation of change', function(done) {
-			let confirmationSMS = apiExpect({ content: /on/ });
+			let confirmationSMS = expectSMS({ content: /on/ });
 
 			sendSMS({ keyword: 'keyword', content: 'keyword on' })
 				.on('error', done)
@@ -107,7 +107,7 @@ describe('If I send an SMS', function() {
 		})
 
 		it('sending another SMS should get me a message', function(done) {
-			let responseSMS = apiExpect();
+			let responseSMS = expectSMS();
 
 			return sendSMS()
 				.on('error', done)
@@ -126,7 +126,7 @@ describe('If I send an SMS', function() {
 		})
 
 		it('I should receive confirmation of change', function(done) {
-			let confirmationSMS = apiExpect({ content: /off/ });
+			let confirmationSMS = expectSMS({ content: /off/ });
 
 			sendSMS({ content: 'off' })
 				.on('error', done)
@@ -138,7 +138,7 @@ describe('If I send an SMS', function() {
 		})
 
 		it('sending another SMS should get me no message', function(done) {
-			let responseSMS = apiExpect();
+			let responseSMS = expectSMS();
 
 			return sendSMS()
 				.on('error', done)
@@ -169,7 +169,7 @@ describe('If I send an SMS', function() {
 			})
 
 			it('it should be treated as an empty text & I should receive a reply', function(done) {
-				let responseSMS = apiExpect({ content: 'Testing' }); // XXX this is a magic constant
+				let responseSMS = expectSMS({ content: 'Testing' }); // XXX this is a magic constant
 
 				sendSMS({ content: 'update ' + newMessage })
 					.on('error', done)
@@ -187,7 +187,7 @@ describe('If I send an SMS', function() {
 			})
 
 			it('I should receive confirmation of change', function(done) {
-				let confirmationSMS = apiExpect({ content: /updated/ });
+				let confirmationSMS = expectSMS({ content: /updated/ });
 
 				sendSMS({ content: 'update ' + newMessage })
 					.on('error', done)
@@ -199,7 +199,7 @@ describe('If I send an SMS', function() {
 			})
 
 			it('sending another SMS should get me the new message', function(done) {
-				let responseSMS = apiExpect({ content: newMessage });
+				let responseSMS = expectSMS({ content: newMessage });
 
 				return sendSMS()
 					.on('error', done)
