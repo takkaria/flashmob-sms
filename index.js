@@ -6,7 +6,8 @@ const request = require('request');
 const debug = require('debug')('flashmob-sms');
 
 const ipCheck = require('./lib/ip-check');
-const numberStore = require('./lib/number-store')
+const numberStore = require('./lib/number-store');
+const messageStore = require('./lib/message-store');
 
 // ====== Initialisation
 
@@ -31,9 +32,6 @@ app.use(ipCheck);
 
 
 // ====== App code
-
-let responseText = 'Testing';
-let responseOn = false;
 
 function getKeyword(str, shortcodeText) {
 	let start = 0;
@@ -62,8 +60,8 @@ function success(res) {
 
 app.post('/', function (req, res) {
 	let message;
-	if (responseOn)
-		message = responseText;
+	if (messageStore.isOn())
+		message = messageStore.getMessage();
 
 	debug('Received message from ' + req.body.from);
 	debug('Message body: ', req.body.content);
@@ -77,13 +75,14 @@ app.post('/', function (req, res) {
 		if (keyword == 'update') {
 			// Extract from after the space after 'update'
 			// XXX This won't work when using a shortcode
-			responseText = incomingMsg.substr(7);
-			message = 'Message updated to: ' + responseText;
+			let newMsg = incomingMsg.substr(7);
+			messageStore.saveMessage(newMsg);
+			message = 'Message updated to: ' + newMsg;
 		} else if (keyword == 'on') {
-			responseOn = true;
+			messageStore.turnOn();
 			message = 'Auto-responder now turned on';
 		} else if (keyword == 'off') {
-			responseOn = false;
+			messageStore.turnOff();
 			message = 'Auto-responder now turned off';
 		}
 
