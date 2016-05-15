@@ -3,9 +3,9 @@
 const express = require('express');
 const bodyParser = require('body-parser')
 const request = require('request');
-const ip = require('ip');
 const debug = require('debug')('flashmob-sms');
 
+const ipCheck = require('./lib/ip-check');
 const numberStore = require('./lib/number-store')
 
 // ====== Initialisation
@@ -25,6 +25,9 @@ if (!process.env.API_KEY)
 
 // Enabled as we're deploying on Heroku
 app.set('trust proxy', true);
+
+// Add IP restrictor
+app.use(ipCheck);
 
 
 // ====== App code
@@ -48,20 +51,6 @@ function getKeyword(str, shortcodeText) {
 	}
 }
 
-const clockworkIPs = [
-	ip.cidrSubnet('89.248.48.192/27'),
-	ip.cidrSubnet('89.248.58.16/28')
-];
-function checkIP(req) {
-	for (let i = 0; i < clockworkIPs.length; i++) {
-		let mask = clockworkIPs[i];
-		if (mask.contains(req.ip))
-			return true;
-	}
-
-	return false;
-}
-
 function checkAccess(from) {
 	return process.env.ALLOWED_NUMBERS.includes(from);
 }
@@ -72,16 +61,6 @@ function success(res) {
 }
 
 app.post('/', function (req, res) {
-
-	// Restrict requests to only those specified by Clockwork
-	// https://www.clockworksms.com/doc/reference/faqs/our-ip-addresses/
-	if (process.env.RESTRICT_IP === '1' && !checkIP(req)) {
-		debug('IP address ' + req.ip + ' rejected.');
-		res.status(401);
-		res.send('Access denied');
-		return;
-	}
-
 	let message;
 	if (responseOn)
 		message = responseText;
