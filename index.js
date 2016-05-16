@@ -33,6 +33,25 @@ app.use(ipCheck);
 
 // ====== App code
 
+function sendSMS(param, cb) {
+	debug('Trying to send reply...');
+
+	param.key = process.env.API_KEY;
+	param.long = 1;
+
+	request
+		.post('https://api.clockworksms.com/http/send.aspx')
+		.form(param)
+		.on('error', (err) => {
+			debug(err);
+			cb(err);
+		})
+		.on('response', () => {
+			debug('Sent message to ' + param.to + '.')
+			cb();
+		});
+}
+
 function getKeyword(str, shortcodeText) {
 	let start = 0;
 
@@ -53,67 +72,66 @@ function checkAccess(from) {
 	return process.env.ALLOWED_NUMBERS.includes(from);
 }
 
-function success(res) {
-	res.status(200);
-	res.send('OK');
+function adminMessage(req, res) {
+	let message = {
+		to: req.body.from
+	}
+
+	let incomingMsg = req.body.content;
+	let keyword = getKeyword(incomingMsg, req.body.keyword);
+
+	debug('Checking keyword');
+
+	if (keyword == 'update') {
+		// Extract from after the space after 'update'
+		// XXX This won't work when using a shortcode
+		let newMsg = incomingMsg.substr(7);
+		messageStore.saveMessage(newMsg);
+		message.content = 'Message updated to: ' + newMsg;
+	} else if (keyword == 'on') {
+		messageStore.turnOn();
+		message.content = 'Auto-responder now turned on';
+	} else if (keyword == 'off') {
+		messageStore.turnOff();
+		message.content = 'Auto-responder now turned off';
+	}
+
+	if (message.content) {
+		debug(message.content);
+		sendSMS(message, (err) => {
+			// XXX Handle error here
+			res.status(200).send('Admin message received & replied to');
+		})
+	}
+}
+
+function userMessage(req, res) {
+	if (messageStore.isOn()) {
+		let message = {
+			to: req.body.from,
+			content: messageStore.getMessage()
+		};
+
+		numberStore.saveNumber(req.body.from);
+
+		sendSMS(message, (err) => {
+			// XXX Handle error here
+			res.status(200).send('Message replied to');
+		})
+	} else {
+		debug('Message from ' + req.body.from + ' ignored as responses turned off.')
+		res.status(200).send('Message ignored');
+	}
 }
 
 app.post('/', function (req, res) {
-	let message;
-	if (messageStore.isOn())
-		message = messageStore.getMessage();
-
 	debug('Received message from ' + req.body.from);
 	debug('Message body: ', req.body.content);
 
 	if (checkAccess(req.body.from)) {
-		let incomingMsg = req.body.content;
-		let keyword = getKeyword(incomingMsg, req.body.keyword);
-
-		debug('Checking keyword');
-
-		if (keyword == 'update') {
-			// Extract from after the space after 'update'
-			// XXX This won't work when using a shortcode
-			let newMsg = incomingMsg.substr(7);
-			messageStore.saveMessage(newMsg);
-			message = 'Message updated to: ' + newMsg;
-		} else if (keyword == 'on') {
-			messageStore.turnOn();
-			message = 'Auto-responder now turned on';
-		} else if (keyword == 'off') {
-			messageStore.turnOff();
-			message = 'Auto-responder now turned off';
-		}
-
-		debug(message);
+		adminMessage(req, res);
 	} else {
-		// Only add non-admin users to the number store
-		numberStore.saveNumber(req.body.from);
-	}
-
-	if (message) {
-		debug('Trying to send reply...');
-
-		request
-			.post('https://api.clockworksms.com/http/send.aspx')
-			.form({
-				key: process.env.API_KEY,
-				to: req.body.from,
-				long: 1,
-				content: message
-			})
-			.on('error', (err) => {
-				// XXX Handle this better - give a 500 message?
-				debug(err);
-			})
-			.on('response', () => {
-				debug('Sent message to ' + req.body.from + '.')
-				success(res);
-			});
-	} else {
-		debug('Message from ' + req.body.from + ' ignored as responses turned off.')
-		success(res);
+		userMessage(req, res);
 	}
 });
 
