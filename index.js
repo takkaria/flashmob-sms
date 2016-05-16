@@ -2,12 +2,12 @@
 
 const express = require('express');
 const bodyParser = require('body-parser')
-const request = require('request');
 const debug = require('debug')('flashmob-sms');
 
 const ipCheck = require('./lib/ip-check');
 const numberStore = require('./lib/number-store');
 const messageStore = require('./lib/message-store');
+const sendSMS = require('./lib/send-sms');
 
 // ====== Initialisation
 
@@ -32,25 +32,6 @@ app.use(ipCheck);
 
 
 // ====== App code
-
-function sendSMS(param, cb) {
-	debug('Trying to send reply...');
-
-	param.key = process.env.API_KEY;
-	param.long = 1;
-
-	request
-		.post('https://api.clockworksms.com/http/send.aspx')
-		.form(param)
-		.on('error', (err) => {
-			debug(err);
-			cb(err);
-		})
-		.on('response', () => {
-			debug('Sent message to ' + param.to + '.')
-			cb();
-		});
-}
 
 function getKeyword(str, shortcodeText) {
 	let start = 0;
