@@ -88,7 +88,6 @@ describe('If I post to the endpoint', function() {
 	})
 })
 
-
 describe('Testing commands.  If I send an SMS', function() {
 	afterEach(function() {
 		nock.cleanAll();
@@ -112,7 +111,7 @@ describe('Testing commands.  If I send an SMS', function() {
 		})
 
 		// This test is identical to the one above except with a 'keyword' added
-		it('(with shortcode) I should receive confirmation of change', function(done) {
+		it('(with keyword) I should receive confirmation of change', function(done) {
 			let confirmationSMS = expectSMS({ content: /on/ });
 
 			sendSMS({
@@ -167,58 +166,74 @@ describe('Testing commands.  If I send an SMS', function() {
 		})
 	})
 
-	describe('starting with "update"', function() {
-		const newMessage = 'Testing 1234';
-
+	describe('starting with "update" from a non admin number', function() {
 		turnOnResponses(it, before);
 
-		describe('from a non admin number', function() {
-			it('it should be treated as an empty text & I should receive a reply', function(done) {
-				let responseSMS = expectSMS({ content: 'Testing' }); // XXX this is a magic constant
+		it('it should be treated as an empty text & I should receive a reply', function(done) {
+			let responseSMS = expectSMS({ content: 'Testing' }); // XXX this is a magic constant
 
-				sendSMS({ content: 'update ' + newMessage })
-					.on('error', done)
-					.on('response', response => {
-						expect(responseSMS.isDone()).to.equal(true);
-						expect(response.statusCode).to.equal(200);
-						done();
-					});
-			})
+			sendSMS({ content: 'update blah' })
+				.on('error', done)
+				.on('response', response => {
+					expect(responseSMS.isDone()).to.equal(true);
+					expect(response.statusCode).to.equal(200);
+					done();
+				});
 		})
-
-		describe('from an admin number', function() {
-			it('I should receive confirmation of change', function(done) {
-				let confirmationSMS = expectSMS({ content: /updated/ });
-
-				sendSMS({ content: 'update ' + newMessage, from: adminNumber })
-					.on('error', done)
-					.on('response', response => {
-						expect(confirmationSMS.isDone()).to.equal(true);
-						expect(response.statusCode).to.equal(200);
-						done();
-					});
-			})
-
-			it('sending another SMS (from a non admin number) should get me the new message', function(done) {
-				let responseSMS = expectSMS({ content: newMessage });
-
-				return sendSMS()
-					.on('error', done)
-					.on('response', response => {
-						expect(responseSMS.isDone()).to.equal(true);
-						expect(response.statusCode).to.equal(200);
-						done();
-					});
-			})
-		})
-
 	})
 
+	describe('starting with "update" from an admin number (no keyword)', function() {
+		const newMessage = 'Testing 1234';
+
+		it('I should receive confirmation of change', function(done) {
+			let confirmationSMS = expectSMS({ content: /updated/ });
+
+			sendSMS({ content: 'update ' + newMessage, from: adminNumber })
+				.on('error', done)
+				.on('response', response => {
+					expect(confirmationSMS.isDone()).to.equal(true);
+					expect(response.statusCode).to.equal(200);
+					done();
+				});
+		})
+
+		it('sending another SMS (from a non admin number) should get me the new message', function(done) {
+			let responseSMS = expectSMS({ content: newMessage });
+
+			return sendSMS()
+				.on('error', done)
+				.on('response', response => {
+					expect(responseSMS.isDone()).to.equal(true);
+					expect(response.statusCode).to.equal(200);
+					done();
+				});
+		})
+	})
+
+	describe('starting with "update" from an admin number (with keyword)', function() {
+		turnOnResponses(it, before);
+
+		const newMessage = '1234';
+
+		it('I should receive confirmation of change without "update" in the message', function(done) {
+			let confirmationSMS = expectSMS(body => !body.content.includes('update 1234'));
+
+			sendSMS({
+				keyword: 'keyword',
+				content: 'keyword update ' + newMessage,
+				from: adminNumber
+			})
+				.on('error', done)
+				.on('response', response => {
+					expect(confirmationSMS.isDone()).to.equal(true);
+					expect(response.statusCode).to.equal(200);
+					done();
+				});
+		})
+	})
 })
 
-
 describe('Testing update distribution', function() {
-
 	turnOnResponses(it, before);
 
 	it('if I send an empty SMS from a non admin number', function(done) {
@@ -244,4 +259,3 @@ describe('Testing update distribution', function() {
 			});
 	})
 })
-
