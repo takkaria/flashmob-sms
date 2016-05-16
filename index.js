@@ -8,6 +8,7 @@ const ipCheck = require('./lib/ip-check');
 const numberStore = require('./lib/number-store');
 const messageStore = require('./lib/message-store');
 const sendSMS = require('./lib/send-sms');
+const admin = require('./lib/admin');
 
 // ====== Initialisation
 
@@ -33,59 +34,6 @@ app.use(ipCheck);
 
 // ====== App code
 
-function getKeyword(str, shortcodeText) {
-	let start = 0;
-
-	// If we have shortcodeText, it means the message is of the form
-	// 'keyword <command>'.  So we ignore the first token in the string
-	// and instead jump ahead.
-	if (shortcodeText) {
-		start = 1;
-	}
-
-	if (str) {
-		let arr = str.split(' ');
-		return arr[start];
-	}
-}
-
-function checkAccess(from) {
-	return process.env.ALLOWED_NUMBERS.includes(from);
-}
-
-function adminMessage(req, res) {
-	let message = {
-		to: req.body.from
-	}
-
-	let incomingMsg = req.body.content;
-	let keyword = getKeyword(incomingMsg, req.body.keyword);
-
-	debug('Checking keyword');
-
-	if (keyword == 'update') {
-		// Extract from after the space after 'update'
-		// XXX This won't work when using a shortcode
-		let newMsg = incomingMsg.substr(7);
-		messageStore.saveMessage(newMsg);
-		message.content = 'Message updated to: ' + newMsg;
-	} else if (keyword == 'on') {
-		messageStore.turnOn();
-		message.content = 'Auto-responder now turned on';
-	} else if (keyword == 'off') {
-		messageStore.turnOff();
-		message.content = 'Auto-responder now turned off';
-	}
-
-	if (message.content) {
-		debug(message.content);
-		sendSMS(message, (err) => {
-			// XXX Handle error here
-			res.status(200).send('Admin message received & replied to');
-		})
-	}
-}
-
 function userMessage(req, res) {
 	if (messageStore.isOn()) {
 		let message = {
@@ -105,12 +53,16 @@ function userMessage(req, res) {
 	}
 }
 
+function checkAccess(from) {
+	return process.env.ALLOWED_NUMBERS.includes(from);
+}
+
 app.post('/', function (req, res) {
 	debug('Received message from ' + req.body.from);
 	debug('Message body: ', req.body.content);
 
 	if (checkAccess(req.body.from)) {
-		adminMessage(req, res);
+		admin(req, res);
 	} else {
 		userMessage(req, res);
 	}
