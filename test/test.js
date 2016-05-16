@@ -12,9 +12,14 @@ const appPort = 4000;
 const appUrl = 'http://localhost:' + appPort + '/';
 const appApiKey = 'testing';
 
+const normalNumber = '44NORMAL';
+const adminNumber = '44ADMIN';
+
 before(function(done) {
 	process.env.PORT = appPort;
 	process.env.API_KEY = appApiKey;
+	process.env.ALLOWED_NUMBERS = adminNumber;
+
 	const app = require('../index');
 	app(done);
 });
@@ -22,11 +27,9 @@ before(function(done) {
 
 // ====== Test helpers
 
-const phoneNumber = '4479677777222';
-
 function sendSMS(params) {
 	params = params || {};
-	params.from = params.from || phoneNumber;
+	params.from = params.from || normalNumber;
 
 	return request.post({
 		url: appUrl,
@@ -40,9 +43,24 @@ function expectSMS(param) {
 
 	let apiCall = nock('https://api.clockworksms.com')
 		.post('/http/send.aspx', param)
-		.reply(200, 'To ' + phoneNumber + ' AB_12345');
+		.reply(200, 'XXX Fill me out properly');
 
 	return apiCall;
+}
+
+
+// ====== Testing bits
+
+function turnOnResponses(it, before) {
+	it('(assuming responses are turned on)')
+	before(function(done) {
+		sendSMS({ content: 'on', from: adminNumber })
+			.on('error', done)
+			.on('response', response => {
+				expect(response.statusCode).to.equal(200);
+				done();
+			});
+	})
 }
 
 
@@ -75,16 +93,15 @@ describe('If I send an SMS', function() {
 		nock.cleanAll();
 	})
 
-	describe('starting with "on"', function() {
-		it('(assuming the number is on the allowed list)')
-		before(function() {
-			process.env.ALLOWED_NUMBERS = phoneNumber;
-		})
+	describe('starting with "on" from an admin number', function() {
 
 		it('I should receive confirmation of change', function(done) {
 			let confirmationSMS = expectSMS({ content: /on/ });
 
-			sendSMS({ content: 'on' })
+			sendSMS({
+				content: 'on',
+				from: adminNumber
+			})
 				.on('error', done)
 				.on('response', response => {
 					expect(confirmationSMS.isDone()).to.equal(true);
@@ -97,7 +114,11 @@ describe('If I send an SMS', function() {
 		it('(with shortcode) I should receive confirmation of change', function(done) {
 			let confirmationSMS = expectSMS({ content: /on/ });
 
-			sendSMS({ keyword: 'keyword', content: 'keyword on' })
+			sendSMS({
+				keyword: 'keyword',
+				content: 'keyword on',
+				from: adminNumber
+			})
 				.on('error', done)
 				.on('response', response => {
 					expect(confirmationSMS.isDone()).to.equal(true);
@@ -106,7 +127,7 @@ describe('If I send an SMS', function() {
 				});
 		})
 
-		it('sending another SMS should get me a message', function(done) {
+		it('sending another SMS (from non admin number) should get me a message', function(done) {
 			let responseSMS = expectSMS();
 
 			return sendSMS()
@@ -119,16 +140,11 @@ describe('If I send an SMS', function() {
 		})
 	})
 
-	describe('starting with "off"', function() {
-		it('(assuming the number is on the allowed list)')
-		before(function() {
-			process.env.ALLOWED_NUMBERS = phoneNumber;
-		})
-
+	describe('starting with "off" from an admin number', function() {
 		it('I should receive confirmation of change', function(done) {
 			let confirmationSMS = expectSMS({ content: /off/ });
 
-			sendSMS({ content: 'off' })
+			sendSMS({ content: 'off', from: adminNumber })
 				.on('error', done)
 				.on('response', response => {
 					expect(confirmationSMS.isDone()).to.equal(true);
@@ -137,7 +153,7 @@ describe('If I send an SMS', function() {
 				});
 		})
 
-		it('sending another SMS should get me no message', function(done) {
+		it('sending another SMS (from non admin number) should get me no message', function(done) {
 			let responseSMS = expectSMS();
 
 			return sendSMS()
@@ -153,21 +169,9 @@ describe('If I send an SMS', function() {
 	describe('starting with "update"', function() {
 		const newMessage = 'Testing 1234';
 
-		it('(assuming responses are turned on)')
-		before(function(done) {
-			sendSMS({ content: 'on' })
-				.on('error', done)
-				.on('response', response => {
-					expect(response.statusCode).to.equal(200);
-					done();
-				});
-		})
+		turnOnResponses(it, before);
 
-		describe('when my number is not on the allowed list', function() {
-			before(function() {
-				process.env.ALLOWED_NUMBERS = '';
-			})
-
+		describe('from a non admin number', function() {
 			it('it should be treated as an empty text & I should receive a reply', function(done) {
 				let responseSMS = expectSMS({ content: 'Testing' }); // XXX this is a magic constant
 
@@ -181,15 +185,11 @@ describe('If I send an SMS', function() {
 			})
 		})
 
-		describe('when my number is on the allowed list', function() {
-			before(function() {
-				process.env.ALLOWED_NUMBERS = phoneNumber;
-			})
-
+		describe('from an admin number', function() {
 			it('I should receive confirmation of change', function(done) {
 				let confirmationSMS = expectSMS({ content: /updated/ });
 
-				sendSMS({ content: 'update ' + newMessage })
+				sendSMS({ content: 'update ' + newMessage, from: adminNumber })
 					.on('error', done)
 					.on('response', response => {
 						expect(confirmationSMS.isDone()).to.equal(true);
@@ -198,7 +198,7 @@ describe('If I send an SMS', function() {
 					});
 			})
 
-			it('sending another SMS should get me the new message', function(done) {
+			it('sending another SMS (from a non admin number) should get me the new message', function(done) {
 				let responseSMS = expectSMS({ content: newMessage });
 
 				return sendSMS()
