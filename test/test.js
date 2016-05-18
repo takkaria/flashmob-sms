@@ -195,6 +195,16 @@ describe('Testing commands.  If I send an SMS', function() {
 		})
 	})
 
+	describe('containing only "update" from an admin number (no keyword)', function() {
+		it('I should receive an error', function() {
+			return sendSMS({
+				from: adminNumber,
+				content: 'update',
+				response: expectSMS({ content: /error/i })
+			})
+		})
+	})
+
 	describe('starting with "update" from an admin number (with keyword)', function() {
 		turnOnResponses(it, before);
 
