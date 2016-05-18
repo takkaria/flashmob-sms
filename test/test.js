@@ -115,6 +115,15 @@ describe('Testing commands.  If I send an SMS', function() {
 		nock.cleanAll();
 	})
 
+	describe('that is empty from an admin number', function() {
+		it('I should not receive a response', function() {
+			return sendSMS({
+				from: adminNumber,
+				noResponse: true
+			})
+		})
+	})
+
 	describe('starting with "on" from an admin number', function() {
 		it('I should receive confirmation of change', function() {
 			return sendSMS({
