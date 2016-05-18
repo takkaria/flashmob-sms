@@ -217,6 +217,18 @@ describe('Testing admin commands.  Assume all following sent from admin number',
 			})
 		})
 	})
+
+	describe('If I send "update <180 characters>" from an admin number', function() {
+		it('I should be told it will use 2 SMSes when distributed', function() {
+			let long = 'x'.repeat(180);
+			return sendSMS({
+				from: adminNumber,
+				content: 'update ' + long,
+				response: expectSMS({ content: /2/i })
+			})
+		})
+	})
+
 })
 
 describe('Testing update distribution', function() {
