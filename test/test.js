@@ -110,12 +110,12 @@ describe('If I post to the endpoint', function() {
 	})
 })
 
-describe('Testing commands.  If I send an SMS', function() {
+describe('Testing admin commands.  Assume all following sent from admin number', function() {
 	afterEach(function() {
 		nock.cleanAll();
 	})
 
-	describe('that is empty from an admin number', function() {
+	describe('If I send an empty message', function() {
 		it('I should not receive a response', function() {
 			return sendSMS({
 				from: adminNumber,
@@ -124,7 +124,7 @@ describe('Testing commands.  If I send an SMS', function() {
 		})
 	})
 
-	describe('starting with "on" from an admin number', function() {
+	describe('If I send "on"', function() {
 		it('I should receive confirmation of change', function() {
 			return sendSMS({
 				from: adminNumber,
@@ -150,7 +150,7 @@ describe('Testing commands.  If I send an SMS', function() {
 		})
 	})
 
-	describe('starting with "off" from an admin number', function() {
+	describe('If I send "off"', function() {
 		it('I should receive confirmation of change', function() {
 			return sendSMS({
 				from: adminNumber,
@@ -166,7 +166,7 @@ describe('Testing commands.  If I send an SMS', function() {
 		})
 	})
 
-	describe('starting with "update" from a non admin number', function() {
+	describe('If I send "update" (from a non admin number)', function() {
 		turnOnResponses(it, before);
 
 		it('it should be treated as an empty text & I should receive a reply', function() {
@@ -177,7 +177,7 @@ describe('Testing commands.  If I send an SMS', function() {
 		})
 	})
 
-	describe('starting with "update" from an admin number (no keyword)', function() {
+	describe('If I send "update Testing 1234" (no keyword)', function() {
 		const newMessage = 'Testing 1234';
 
 		it('I should receive confirmation of change', function() {
@@ -195,17 +195,7 @@ describe('Testing commands.  If I send an SMS', function() {
 		})
 	})
 
-	describe('containing only "update" from an admin number (no keyword)', function() {
-		it('I should receive an error', function() {
-			return sendSMS({
-				from: adminNumber,
-				content: 'update',
-				response: expectSMS({ content: /error/i })
-			})
-		})
-	})
-
-	describe('starting with "update" from an admin number (with keyword)', function() {
+	describe('If I send "update 1234" (with keyword)', function() {
 		turnOnResponses(it, before);
 
 		it('I should receive confirmation of change without "update" in the message', function() {
@@ -214,6 +204,16 @@ describe('Testing commands.  If I send an SMS', function() {
 				keyword: 'keyword',
 				content: 'keyword update 1234',
 				response: expectSMS(body => !body.content.includes('update 1234'))
+			})
+		})
+	})
+
+	describe('If I send "update" (and nothing else) from an admin number (no keyword)', function() {
+		it('I should receive an error', function() {
+			return sendSMS({
+				from: adminNumber,
+				content: 'update',
+				response: expectSMS({ content: /error/i })
 			})
 		})
 	})
