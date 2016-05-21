@@ -33,11 +33,6 @@ function sendSMS(params) {
 		params.response = [ params.response ];
 	}
 
-	// Set up an SMS expectation so we can check it ISN'T fulfilled
-	if (params.noResponse) {
-		params.noResponse = expectSMS();
-	}
-
 	return new Promise((fulfill, reject) => {
 		request
 			.post({
@@ -119,7 +114,7 @@ describe('Testing admin commands.  Assume all following sent from admin number',
 		it('I should not receive a response', function() {
 			return sendSMS({
 				from: adminNumber,
-				noResponse: true
+				noResponse: expectSMS()
 			})
 		})
 	})
@@ -171,7 +166,7 @@ describe('Testing admin commands.  Assume all following sent from admin number',
 
 		it('sending another SMS (from non admin number) should get me no message', function() {
 			return sendSMS({
-				noResponse: true
+				noResponse: expectSMS()
 			})
 		})
 	})
@@ -237,6 +232,33 @@ describe('Testing admin commands.  Assume all following sent from admin number',
 				response: expectSMS({ content: /2/i })
 			})
 		})
+	})
+
+	describe('If I send "wipe"', function() {
+		it('I should be told all data is wiped', function() {
+			return sendSMS({
+				from: adminNumber,
+				content: 'wipe',
+				response: expectSMS({ content: /wiped/ })
+			})
+		})
+
+		it('& then if I turn on the responder', function() {
+			return sendSMS({
+				from: adminNumber,
+				content: 'on'
+			});
+		})
+
+		it('& make an update, no message should be sent out out', function() {
+			return sendSMS({
+				from: adminNumber,
+				content: 'update Testy McTesterson',
+				response: expectSMS({ to: adminNumber, content: /update/ }),
+				noResponse: expectSMS()
+			})
+		})
+
 	})
 
 })
