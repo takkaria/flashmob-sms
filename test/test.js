@@ -5,6 +5,8 @@ const request = require('request');
 const expect = chai.expect;
 const nock = require('nock');
 
+nock.disableNetConnect();
+nock.enableNetConnect('localhost');
 
 // ====== App init
 
@@ -281,6 +283,38 @@ describe('Testing update distribution', function() {
 				expectSMS({ to: adminNumber }),
 				expectSMS({ content: /amazingtime/, to: normalNumber })
 			]
+		})
+	})
+
+	describe('Testing 150 users', function() {
+		const random = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+
+		let allNumbers = [];
+		for (let i = 0; i < 149; i++) {
+			allNumbers.push('0790' + random(1000000, 9999999))
+		}
+
+		it('(registering 149 numbers; 1 - normalNumber - is already registered)');
+
+		// Mock up 149 API calls
+		before(function() {
+			nock('https://api.clockworksms.com')
+				.post('/http/send.aspx')
+				.times(149)
+				.reply(200, 'OK');
+		});
+
+		for (let number of allNumbers) {
+			before(() => sendSMS({ from: number }));
+		}
+
+		it('if I update the message text, only 3 API calls should be made (50 recipients each)', function() {
+			return sendSMS({
+				from: adminNumber,
+				content: 'update Come to Piccadilly Gardens NOW',
+				response: [ expectSMS({ to: adminNumber }), expectSMS(), expectSMS(), expectSMS() ],
+				noResponse: expectSMS()
+			})
 		})
 	})
 })
