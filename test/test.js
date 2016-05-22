@@ -18,6 +18,8 @@ const normalNumber = '44NORMAL';
 const adminNumber = '44ADMIN';
 
 before(function(done) {
+	this.timeout(5000);
+
 	process.env.PORT = appPort;
 	process.env.API_KEY = appApiKey;
 	process.env.ALLOWED_NUMBERS = adminNumber;

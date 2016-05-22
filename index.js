@@ -1,5 +1,6 @@
 'use strict';
 
+const async = require('async');
 const express = require('express');
 const bodyParser = require('body-parser')
 const debug = require('debug')('flashmob-sms');
@@ -75,11 +76,17 @@ app.post('/', function (req, res) {
 
 function start(fn) {
 	const port = process.env.PORT || 3000;
-	app.listen(port, function () {
+
+	async.parallel([
+		numberStore.restore,
+		messageStore.restoreStatus,
+		messageStore.restoreMessage,
+		(cb) => app.listen(port, cb)
+	], function onFinished(err) {
 		if (fn) {
-			fn(null, port);
+			fn(err, port);
 		}
-	});
+	})
 }
 
 if (require.main === module) {
