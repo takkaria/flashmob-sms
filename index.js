@@ -77,7 +77,6 @@ app.post('/', function (req, res) {
 function start(fn) {
 	const port = process.env.PORT || 3000;
 
-	// Initialise data stores
 	async.parallel([
 		numberStore.restore,
 		messageStore.restoreStatus,
