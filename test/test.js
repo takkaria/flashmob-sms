@@ -318,5 +318,13 @@ describe('Testing update distribution', function() {
 				noResponse: expectSMS()
 			})
 		})
+
+		it('if I ask for a status update, 150 recipients should be mentioned', function() {
+			return sendSMS({
+				from: adminNumber,
+				content: 'status',
+				response: expectSMS({ content: /150/ })
+			})
+		})
 	})
 })
