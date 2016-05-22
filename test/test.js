@@ -114,6 +114,32 @@ describe('Testing admin commands.  Assume all following sent from admin number',
 		nock.cleanAll();
 	})
 
+	describe('If I send "wipe"', function() {
+		it('I should be told all data is wiped', function() {
+			return sendSMS({
+				from: adminNumber,
+				content: 'wipe',
+				response: expectSMS({ content: /wiped/ })
+			})
+		})
+
+		it('& then if I turn on the responder', function() {
+			return sendSMS({
+				from: adminNumber,
+				content: 'on'
+			});
+		})
+
+		it('& make an update, no message should be sent out', function() {
+			return sendSMS({
+				from: adminNumber,
+				content: 'update Testy McTesterson',
+				response: expectSMS({ to: adminNumber, content: /update/ }),
+				noResponse: expectSMS()
+			})
+		})
+	})
+
 	describe('If I send an empty message', function() {
 		it('I should not receive a response', function() {
 			return sendSMS({
@@ -237,37 +263,12 @@ describe('Testing admin commands.  Assume all following sent from admin number',
 			})
 		})
 	})
-
-	describe('If I send "wipe"', function() {
-		it('I should be told all data is wiped', function() {
-			return sendSMS({
-				from: adminNumber,
-				content: 'wipe',
-				response: expectSMS({ content: /wiped/ })
-			})
-		})
-
-		it('& then if I turn on the responder', function() {
-			return sendSMS({
-				from: adminNumber,
-				content: 'on'
-			});
-		})
-
-		it('& make an update, no message should be sent out out', function() {
-			return sendSMS({
-				from: adminNumber,
-				content: 'update Testy McTesterson',
-				response: expectSMS({ to: adminNumber, content: /update/ }),
-				noResponse: expectSMS()
-			})
-		})
-
-	})
-
 })
 
 describe('Testing update distribution', function() {
+	afterEach(function() {
+		nock.cleanAll();
+	})
 	turnOnResponses(it, before);
 
 	it('if I send an empty SMS from a non admin number', function() {
