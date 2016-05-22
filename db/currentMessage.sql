@@ -1,0 +1,1 @@
+SELECT * from messages ORDER BY id DESC LIMIT 1;

@@ -287,11 +287,9 @@ describe('Testing update distribution', function() {
 	})
 
 	describe('Testing 150 users', function() {
-		const random = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
-
 		let allNumbers = [];
 		for (let i = 0; i < 149; i++) {
-			allNumbers.push('0790' + random(1000000, 9999999))
+			allNumbers.push('0790' + (1000000 + i))
 		}
 
 		it('(registering 149 numbers; 1 - normalNumber - is already registered)');
@@ -301,6 +299,7 @@ describe('Testing update distribution', function() {
 			nock('https://api.clockworksms.com')
 				.post('/http/send.aspx')
 				.times(149)
+//				.delay(30) // - only when testing DB access
 				.reply(200, 'OK');
 		});
 

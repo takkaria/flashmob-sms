@@ -4,6 +4,8 @@ const express = require('express');
 const bodyParser = require('body-parser')
 const debug = require('debug')('flashmob-sms');
 
+const db = require('./lib/db'); // We include this here so DB init is done early
+
 const ipCheck = require('./lib/ip-check');
 const numberStore = require('./lib/number-store');
 const messageStore = require('./lib/message-store');
