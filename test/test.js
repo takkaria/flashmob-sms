@@ -149,6 +149,16 @@ describe('Testing admin commands.  Assume all following sent from admin number',
 		})
 	})
 
+	describe('If I send "update:"', function() {
+		it('I should recieve an error', function() {
+			return sendSMS({
+				from: adminNumber,
+				content: 'update: testing',
+				response: expectSMS({ content: /not recognised/ })
+			})
+		})
+	})
+
 	describe('If I send "ON"', function() {
 		it('I should receive confirmation of change', function() {
 			return sendSMS({
