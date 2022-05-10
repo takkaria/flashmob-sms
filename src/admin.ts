@@ -6,6 +6,7 @@ import type { Request, Response } from "express";
 import { sendSMS } from "./send-sms";
 import messageStore from "./message-store";
 import numberStore from "./number-store";
+import { z } from "zod";
 
 type ParsedMessage = {
   keyword: string;
@@ -16,7 +17,9 @@ function parseMessage(
   message: string,
   keyword: string | null
 ): ParsedMessage | null {
-  if (!message) return null;
+  if (message === "") {
+    return null;
+  }
 
   let splat = message.split(" ");
 
@@ -27,16 +30,10 @@ function parseMessage(
     splat.shift();
   }
 
-  if (!message) {
-    return null;
-  }
-
-  const parsed: ParsedMessage = {
+  return {
     keyword: splat.shift()?.toLowerCase() ?? "",
     content: splat.join(" "),
   };
-
-  return parsed;
 }
 
 function distributeUpdate(text: string) {
@@ -128,25 +125,32 @@ const actions: ActionTable = {
   status: function () {
     let recipients = numberStore.getAll().length;
     let on = messageStore.isOn() ? "on" : "off";
-    return (
-      "Auto-responder is " +
-      on +
-      ". " +
-      recipients +
-      " currently registered phone numbers."
-    );
+    return `Auto-responder is ${on}. ${recipients} currently registered phone numbers.`;
   },
 };
 
+const bodySchema = z.object({
+  keyword: z
+    .string()
+    .optional()
+    .transform((v) => v ?? ""),
+  content: z
+    .string()
+    .optional()
+    .transform((v) => v ?? ""),
+});
+
 export function adminMessage(req: Request, res: Response): void {
-  let parsedMsg = parseMessage(req.body.content, req.body.keyword);
+  const input = bodySchema.parse(req.body);
+
+  const parsedMsg = parseMessage(input.content, input.keyword);
   if (!parsedMsg) {
     res.status(200).send("Unparsable message received");
     return;
   }
 
-  let keyword = parsedMsg.keyword;
-  let action = actions?.[keyword];
+  const keyword = parsedMsg.keyword;
+  const action = actions?.[keyword];
 
   sendSMS({
     to: req.body.from,

@@ -5,17 +5,16 @@ const debug = Debug("flashmob-sms:number-store");
 let storedNumbers: string[] = [];
 
 function dbSync() {
-  let row = { data: JSON.stringify(storedNumbers) };
-
-  db.instance.numbers.insert(row, (err: Error) => {
-    if (err) {
-      debug("DB: error updating phone numbers", err);
-    } else {
-      debug("DB: insert succeeded");
-    }
-  });
-
   timeoutID = null;
+
+  try {
+    db.instance.numbers.insert({ data: JSON.stringify(storedNumbers) });
+  } catch (err) {
+    debug("DB: error updating phone numbers", err);
+    return;
+  }
+
+  debug("DB: insert succeeded");
 }
 
 let timeoutID: NodeJS.Timeout | null;
