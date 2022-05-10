@@ -24,8 +24,8 @@ before(function (done) {
   process.env.API_KEY = appApiKey;
   process.env.ALLOWED_NUMBERS = adminNumber;
 
-  const app = require("../index");
-  app(done);
+  const start = require("../index");
+  start().then(done);
 });
 
 // ====== Test helpers

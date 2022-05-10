@@ -76,29 +76,36 @@ app.post("/", function (req, res) {
 
 // ====== Either run (if run directly) or export as a module
 
-async function start(fn) {
+function init() {
   const port = process.env.PORT || 3000;
-
-  const massive = await db.init();
-  db.setInstance(massive);
-
-  async.parallel(
-    [
-      numberStore.restore,
-      messageStore.restoreStatus,
-      messageStore.restoreMessage,
-      (cb) => app.listen(port, cb),
-    ],
-    function onFinished(err) {
-      if (fn) {
-        fn(err, port);
+  return new Promise((resolve, reject) => {
+    async.parallel(
+      [
+        numberStore.restore,
+        messageStore.restoreStatus,
+        messageStore.restoreMessage,
+        (cb) => app.listen(port, cb),
+      ],
+      function onFinished(err) {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(port);
+        }
       }
-    }
-  );
+    );
+  });
+}
+
+async function start(fn) {
+  const instance = await db.init();
+  db.setInstance(instance);
+  await init();
+  return;
 }
 
 if (require.main === module) {
-  start((err, port) => console.log("Listening on port " + port));
+  start().then((port) => console.log("Listening on port " + port));
 }
 
 module.exports = start;
