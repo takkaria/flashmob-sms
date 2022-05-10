@@ -60,6 +60,10 @@ function checkAccess(from) {
 	return process.env.ALLOWED_NUMBERS.includes(from);
 }
 
+app.get('/', function(req, res) {
+	res.status(200).send('Service up');
+});
+
 app.post('/', function (req, res) {
 	debug('Received message from ' + req.body.from);
 	debug('Message body: ', req.body.content);
