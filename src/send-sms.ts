@@ -1,12 +1,18 @@
-"use strict";
+import request from "request";
+import Debug from "debug";
+const debug = Debug("flashmob-sms:send-sms");
 
-const request = require("request");
-const debug = require("debug")("flashmob-sms:send-sms");
+type SMSParams = {
+  to: string;
+  content: string;
+  key?: string;
+  long?: 0 | 1;
+};
 
-module.exports = function sendSMS(param, cb) {
+export default function sendSMS(param: SMSParams, cb) {
   debug("Trying to send message...");
 
-  param.key = process.env.API_KEY;
+  param.key = process.env["API_KEY"] ?? "";
   param.long = 1;
 
   request
@@ -20,4 +26,4 @@ module.exports = function sendSMS(param, cb) {
       debug("Sent message to " + param.to + ".");
       cb();
     });
-};
+}

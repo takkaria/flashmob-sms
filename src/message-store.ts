@@ -1,12 +1,12 @@
-"use strict";
-
 const db = require("./db");
-const debug = require("debug")("flashmob-sms:message-store");
+import Debug from "debug";
+const debug = Debug("flashmob-sms:message-store");
+import type { Request, Response } from "express";
 
 let storedMessage = "Testing";
 let messageOn = false;
 
-function dbState(status) {
+function dbState(status: boolean) {
   db.instance.status.save({ id: 1, state: status }, (err, res) => {
     if (err) {
       debug("DB: Failed database syncing auto-responder state");
@@ -14,8 +14,8 @@ function dbState(status) {
   });
 }
 
-module.exports = {
-  saveMessage: function saveMessage(str) {
+const messageStore = {
+  saveMessage: function saveMessage(str: string) {
     storedMessage = str;
     db.instance.messages.insert({ message: str }, (err, res) => {
       if (err) {
@@ -26,7 +26,7 @@ module.exports = {
     });
   },
 
-  getMessage: function getMessage(str) {
+  getMessage: function getMessage() {
     return storedMessage;
   },
 
@@ -44,34 +44,32 @@ module.exports = {
     return messageOn;
   },
 
-  restoreStatus: function restoreStatus(cb) {
-    db.instance.currentStatus((err, res) => {
-      if (err) {
-        debug("DB: error restoring status", err);
-      } else if (res && res[0]) {
-        messageOn = res[0].state;
-        debug("Status restored: ", messageOn);
-      }
+  async restoreStatus(): Promise<void> {
+    let result;
+    try {
+      result = db.instance.currentStatus();
+    } catch (err) {
+      debug("DB: error restoring status", err);
+    }
 
-      if (cb) {
-        cb(err);
-      }
-    });
+    if (result && result[0]) {
+      messageOn = result[0].state;
+      debug("Status restored: ", messageOn);
+    }
   },
 
-  restoreMessage: function restoreMessage(cb) {
-    db.instance.currentMessage((err, res) => {
-      if (err) {
-        debug("DB: error restoring message", err);
-      } else if (res && res[0]) {
-        storedMessage = res[0].message;
-        debug("Message restored: ", storedMessage);
-      }
+  async restoreMessage(): Promise<void> {
+    let result;
+    try {
+      result = db.instance.currentMessage();
+    } catch (err) {
+      debug("DB: error restoring message", err);
+    }
 
-      if (cb) {
-        cb(err);
-      }
-    });
+    if (result && result[0]) {
+      storedMessage = result[0].message;
+      debug("Message restored: ", storedMessage);
+    }
   },
 
   wipe: function wipe() {
@@ -86,3 +84,5 @@ module.exports = {
     });
   },
 };
+
+export default messageStore;

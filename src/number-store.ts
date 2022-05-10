@@ -1,14 +1,13 @@
-"use strict";
-
 const db = require("./db");
-const debug = require("debug")("flashmob-sms:number-store");
+import Debug from "debug";
+const debug = Debug("flashmob-sms:number-store");
 
-let storedNumbers = [];
+let storedNumbers: string[] = [];
 
 function dbSync() {
   let row = { data: JSON.stringify(storedNumbers) };
 
-  db.instance.numbers.insert(row, (err, res) => {
+  db.instance.numbers.insert(row, (err: Error) => {
     if (err) {
       debug("DB: error updating phone numbers", err);
     } else {
@@ -19,15 +18,15 @@ function dbSync() {
   timeoutID = null;
 }
 
-let timeoutID;
+let timeoutID: NodeJS.Timeout | null;
 function scheduleDbUpdate() {
   if (!timeoutID) {
     timeoutID = setTimeout(dbSync, 200);
   }
 }
 
-module.exports = {
-  saveNumber: function saveNumber(num) {
+const fns = {
+  saveNumber: function saveNumber(num: string) {
     if (storedNumbers.findIndex((elem) => elem == num) !== -1) {
       return;
     }
@@ -40,19 +39,19 @@ module.exports = {
     return storedNumbers;
   },
 
-  restore: function restoreNumbers(cb) {
-    db.instance.currentNumbers((err, res) => {
-      if (err) {
-        debug("DB: error restoring numbers", err);
-      } else if (res && res[0]) {
-        storedNumbers = JSON.parse(res[0].data);
-        debug("Numbers restored: ", storedNumbers);
-      }
+  async restore(): Promise<void> {
+    let result;
+    try {
+      result = await db.instance.currentNumbers();
+    } catch (err) {
+      debug("DB: error restoring numbers", err);
+      return;
+    }
 
-      if (cb) {
-        cb(err);
-      }
-    });
+    if (result && result[0]) {
+      storedNumbers = JSON.parse(result[0].data);
+      debug("Numbers restored: ", storedNumbers);
+    }
   },
 
   wipe: function wipe() {
@@ -65,3 +64,5 @@ module.exports = {
     });
   },
 };
+
+export default fns;

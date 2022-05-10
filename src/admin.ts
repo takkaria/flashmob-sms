@@ -1,15 +1,23 @@
-"use strict";
+import Debug from "debug";
+const debug = Debug("flashmob-sms:admin");
 
-const debug = require("debug")("flashmob-sms:admin");
+import type { Request, Response } from "express";
 
-const sendSMS = require("./send-sms");
-const messageStore = require("./message-store");
-const numberStore = require("./number-store");
+import sendSMS from "./send-sms";
+import messageStore from "./message-store";
+import numberStore from "./number-store";
 
-function parseMessage(message, keyword) {
-  if (!message) return;
+type ParsedMessage = {
+  keyword: string;
+  content: string;
+};
 
-  let parsed = {};
+function parseMessage(
+  message: string,
+  keyword: string | null
+): ParsedMessage | null {
+  if (!message) return null;
+
   let splat = message.split(" ");
 
   // If we have keyword, it means the message is of the form
@@ -19,18 +27,19 @@ function parseMessage(message, keyword) {
     splat.shift();
   }
 
-  if (message) {
-    parsed.keyword = splat.shift();
-    parsed.content = splat.join(" ");
-
-    if (typeof parsed.keyword === "string")
-      parsed.keyword = parsed.keyword.toLowerCase();
+  if (!message) {
+    return null;
   }
+
+  const parsed: ParsedMessage = {
+    keyword: splat.shift()?.toLowerCase() ?? "",
+    content: splat.join(" "),
+  };
 
   return parsed;
 }
 
-function distributeUpdate(text) {
+function distributeUpdate(text: string) {
   let numbers = numberStore.getAll();
   if (numbers.length === 0) {
     debug("Message not distributed as number store is empty.");
@@ -39,7 +48,7 @@ function distributeUpdate(text) {
 
   const numNumbers = numbers.length;
   const portionSize = 50;
-  let splitNumbers = [];
+  let splitNumbers: string[][] = [];
   let min = 0;
 
   while (1) {
@@ -60,7 +69,7 @@ function distributeUpdate(text) {
       content: text,
     };
 
-    sendSMS(message, (err) => {
+    sendSMS(message, (err: Error) => {
       if (err) {
         debug("Failed to distribute message update");
       } else {
@@ -70,7 +79,7 @@ function distributeUpdate(text) {
   }
 }
 
-function howManySMS(length) {
+function howManySMS(length: number) {
   if (length < 161) {
     return 1;
   } else if (length < 307) {
@@ -82,18 +91,23 @@ function howManySMS(length) {
   }
 }
 
-const actions = {
-  update: function (parsedMsg) {
-    if (!parsedMsg.content) {
+type Action = (message: ParsedMessage) => string;
+type ActionTable = {
+  [k: string]: Action;
+};
+
+const actions: ActionTable = {
+  update: function (message: ParsedMessage) {
+    if (!message.content) {
       return "Error: message update contains no message";
     }
 
     // Save the message
-    messageStore.saveMessage(parsedMsg.content);
-    distributeUpdate(parsedMsg.content);
+    messageStore.saveMessage(message.content);
+    distributeUpdate(message.content);
 
     // Notify the user
-    let characters = parsedMsg.content.length;
+    let characters = message.content.length;
     let sms = howManySMS(characters);
 
     return (
@@ -134,11 +148,7 @@ const actions = {
   },
 };
 
-function adminMessage(req, res) {
-  let message = {
-    to: req.body.from,
-  };
-
+export function adminMessage(req: Request, res: Response): void {
   let parsedMsg = parseMessage(req.body.content, req.body.keyword);
   if (!parsedMsg) {
     res.status(200).send("Unparsable message received");
@@ -146,22 +156,16 @@ function adminMessage(req, res) {
   }
 
   let keyword = parsedMsg.keyword;
-  if (keyword && typeof actions[keyword] === "function") {
-    let fn = actions[keyword];
-    message.content = fn(parsedMsg);
-  } else {
-    message.content = "Command not recognised";
-  }
+  let action = actions?.[keyword];
 
-  if (message.content) {
-    debug(message.content);
-    sendSMS(message, (err) => {
+  sendSMS(
+    {
+      to: req.body.from,
+      content: action ? action(parsedMsg) : "Command not recognised",
+    },
+    (err: Error) => {
       // XXX Handle error here
       res.status(200).send("Admin message received & replied to");
-    });
-  }
+    }
+  );
 }
-
-module.exports = function admin(req, res) {
-  adminMessage(req, res);
-};

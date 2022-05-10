@@ -24,7 +24,7 @@ before(function (done) {
   process.env.API_KEY = appApiKey;
   process.env.ALLOWED_NUMBERS = adminNumber;
 
-  const start = require("../index");
+  const start = require("../src/server");
   start().then(done);
 });
 
