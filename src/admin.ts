@@ -3,7 +3,7 @@ const debug = Debug("flashmob-sms:admin");
 
 import type { Request, Response } from "express";
 
-import sendSMS from "./send-sms";
+import { sendSMS } from "./send-sms";
 import messageStore from "./message-store";
 import numberStore from "./number-store";
 
@@ -69,13 +69,9 @@ function distributeUpdate(text: string) {
       content: text,
     };
 
-    sendSMS(message, (err: Error) => {
-      if (err) {
-        debug("Failed to distribute message update");
-      } else {
-        debug("Successfully distributed message update");
-      }
-    });
+    sendSMS(message)
+      .then(() => debug("Successfully distributed message update"))
+      .catch(() => debug("Failed to distribute message update"));
   }
 }
 
@@ -110,13 +106,7 @@ const actions: ActionTable = {
     let characters = message.content.length;
     let sms = howManySMS(characters);
 
-    return (
-      "Message updated; " +
-      characters +
-      " characters, " +
-      sms +
-      " SMSes per message"
-    );
+    return `Message updated; ${characters} characters, ${sms} SMSes per message`;
   },
 
   on: function () {
@@ -158,14 +148,8 @@ export function adminMessage(req: Request, res: Response): void {
   let keyword = parsedMsg.keyword;
   let action = actions?.[keyword];
 
-  sendSMS(
-    {
-      to: req.body.from,
-      content: action ? action(parsedMsg) : "Command not recognised",
-    },
-    (err: Error) => {
-      // XXX Handle error here
-      res.status(200).send("Admin message received & replied to");
-    }
-  );
+  sendSMS({
+    to: req.body.from,
+    content: action ? action(parsedMsg) : "Command not recognised",
+  }).then(() => res.status(200).send("Admin message received & replied to"));
 }

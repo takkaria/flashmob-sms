@@ -240,12 +240,12 @@ describe("Testing admin commands.  Assume all following sent from admin number",
   describe('If I send "update 1234" (with keyword)', function () {
     turnOnResponses(it, before);
 
-    it('I should receive confirmation of change without "update" in the message', function () {
+    it('I should receive confirmation of change', function () {
       return sendSMS({
         from: adminNumber,
         keyword: "keyword",
         content: "keyword update 1234",
-        response: expectSMS((body) => !body.content.includes("update 1234")),
+        response: expectSMS((body) => body.content.includes("Message updated")),
       });
     });
   });

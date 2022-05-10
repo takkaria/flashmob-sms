@@ -5,7 +5,7 @@ import { setInstance, init as initDb } from "./db";
 import ipCheck from "./ip-check";
 import numberStore from "./number-store";
 import messageStore from "./message-store";
-import sendSMS from "./send-sms";
+import { sendSMS } from "./send-sms";
 import { adminMessage } from "./admin";
 
 import Debug from "debug";
@@ -41,14 +41,9 @@ function userMessage(req: Request, res: Response) {
 
     numberStore.saveNumber(req.body.from);
 
-    sendSMS(message, (err: Error) => {
-      // XXX Handle error here
-      res.status(200).send("Message replied to");
-    });
+    sendSMS(message).then(() => res.status(200).send("Message replied to"));
   } else {
-    debug(
-      "Message from " + req.body.from + " ignored as responses turned off."
-    );
+    debug(`Message from ${req.body.from} ignored as responses turned off.`);
     res.status(200).send("Message ignored");
   }
 }
