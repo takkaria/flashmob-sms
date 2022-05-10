@@ -1,0 +1,18 @@
+version: '3'
+
+volumes:
+  pg_data: {}
+  pg_data_backups: {}
+
+services:
+  postgres:
+    image: postgres:14
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+      - pg_data_backups:/backups
+    environment:
+        POSTGRES_USER: test
+        POSTGRES_PASSWORD: supralocal
+        POSTGRES_DB: test
+    ports:
+      - "5432:5432"
