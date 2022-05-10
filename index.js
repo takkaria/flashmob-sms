@@ -74,8 +74,11 @@ app.post('/', function (req, res) {
 
 // ====== Either run (if run directly) or export as a module
 
-function start(fn) {
+async function start(fn) {
 	const port = process.env.PORT || 3000;
+
+	const massive = await db.init();
+	db.setInstance(massive);
 
 	async.parallel([
 		numberStore.restore,
