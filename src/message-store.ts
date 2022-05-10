@@ -6,24 +6,25 @@ import type { Request, Response } from "express";
 let storedMessage = "Testing";
 let messageOn = false;
 
-function dbState(status: boolean) {
-  db.instance.status.save({ id: 1, state: status }, (err, res) => {
-    if (err) {
-      debug("DB: Failed database syncing auto-responder state");
-    }
-  });
+function dbState(state: boolean) {
+  try {
+    db.instance.status.save({ id: 1, state });
+  } catch (err) {
+    debug("DB: Failed database syncing auto-responder state");
+  }
 }
 
 const messageStore = {
-  saveMessage: function saveMessage(str: string) {
-    storedMessage = str;
-    db.instance.messages.insert({ message: str }, (err, res) => {
-      if (err) {
-        debug("DB: error inserting message", err);
-      } else {
-        debug("DB: insert succeeded");
-      }
-    });
+  saveMessage: function saveMessage(message: string) {
+    storedMessage = message;
+    try {
+      db.instance.messages.insert({ message });
+    } catch (err) {
+      debug("DB: error inserting message", err);
+      return;
+    }
+
+    debug("DB: insert succeeded");
   },
 
   getMessage: function getMessage() {
@@ -77,11 +78,11 @@ const messageStore = {
     dbState(false);
 
     storedMessage = "";
-    db.instance.messages.destroy({}, (err, res) => {
-      if (err) {
-        debug("DB: Error deleting messages", err);
-      }
-    });
+    try {
+      db.instance.messages.destroy({});
+    } catch (err) {
+      debug("DB: Error deleting messages", err);
+    }
   },
 };
 

@@ -57,11 +57,11 @@ const fns = {
   wipe: function wipe() {
     storedNumbers = [];
 
-    db.instance.numbers.destroy({}, (err, res) => {
-      if (err) {
-        debug("DB: Error deleting phone numbers", err);
-      }
-    });
+    try {
+      db.instance.numbers.destroy({});
+    } catch (err) {
+      debug("DB: Error deleting phone numbers", err);
+    }
   },
 };
 
