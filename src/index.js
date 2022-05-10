@@ -5,13 +5,13 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const debug = require("debug")("flashmob-sms");
 
-const db = require("./lib/db"); // We include this here so DB init is done early
+const db = require("./db"); // We include this here so DB init is done early
 
-const ipCheck = require("./lib/ip-check");
-const numberStore = require("./lib/number-store");
-const messageStore = require("./lib/message-store");
-const sendSMS = require("./lib/send-sms");
-const admin = require("./lib/admin");
+const ipCheck = require("./ip-check");
+const numberStore = require("./number-store");
+const messageStore = require("./message-store");
+const sendSMS = require("./send-sms");
+const admin = require("./admin");
 
 // ====== Initialisation
 

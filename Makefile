@@ -1,7 +1,7 @@
 .PHONY: dev test deploy
 
 dev:
-	API_KEY=xxx DATABASE_URL=postgres://test:supralocal@localhost:5432/test node index.js
+	API_KEY=xxx DATABASE_URL=postgres://test:supralocal@localhost:5432/test node src/index.js
 
 test:
 	DATABASE_URL=postgres://test:supralocal@localhost:5432/test ./node_modules/.bin/mocha
