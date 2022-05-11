@@ -56,7 +56,7 @@ async function userMessage(
   }
 }
 
-function checkAccess(from: string): boolean {
+function isAdmin(from: string): boolean {
   return process.env["ALLOWED_NUMBERS"]?.includes(from) ?? false;
 }
 
@@ -76,7 +76,7 @@ app.post("/sms", async function (req: Request, res: Response) {
   debug("Message body: ", input.Body);
 
   try {
-    if (checkAccess(input.From)) {
+    if (isAdmin(input.From)) {
       await adminMessage(input, res);
     } else {
       await userMessage(input, res);
