@@ -1,4 +1,4 @@
-const db = require("./db");
+import { instance } from "./db";
 import Debug from "debug";
 const debug = Debug("flashmob-sms:message-store");
 import type { Request, Response } from "express";
@@ -8,7 +8,7 @@ let messageOn = false;
 
 function dbState(state: boolean) {
   try {
-    db.instance.status.save({ id: 1, state });
+    instance['status'].save({ id: 1, state });
   } catch (err) {
     debug("DB: Failed database syncing auto-responder state");
   }
@@ -18,7 +18,7 @@ const messageStore = {
   saveMessage: function saveMessage(message: string) {
     storedMessage = message;
     try {
-      db.instance.messages.insert({ message });
+      instance['messages'].insert({ message });
     } catch (err) {
       debug("DB: error inserting message", err);
       return;
@@ -48,7 +48,7 @@ const messageStore = {
   async restoreStatus(): Promise<void> {
     let result;
     try {
-      result = db.instance.currentStatus();
+      result = instance['currentStatus']();
     } catch (err) {
       debug("DB: error restoring status", err);
     }
@@ -62,7 +62,7 @@ const messageStore = {
   async restoreMessage(): Promise<void> {
     let result;
     try {
-      result = db.instance.currentMessage();
+      result = instance['currentMessage']();
     } catch (err) {
       debug("DB: error restoring message", err);
     }
@@ -79,7 +79,7 @@ const messageStore = {
 
     storedMessage = "";
     try {
-      db.instance.messages.destroy({});
+      instance['messages'].destroy({});
     } catch (err) {
       debug("DB: Error deleting messages", err);
     }

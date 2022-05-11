@@ -1,4 +1,4 @@
-const ip = require("ip");
+import ip from "ip";
 import type { Request, Response } from "express";
 
 import Debug from "debug";
@@ -10,9 +10,10 @@ const clockworkIPs = [
 ];
 
 function checkIP(ip: string) {
-  for (let i = 0; i < clockworkIPs.length; i++) {
-    let mask = clockworkIPs[i];
-    if (mask.contains(ip)) return true;
+  for (const mask of clockworkIPs) {
+    if (mask.contains(ip)) {
+      return true;
+    }
   }
 
   return false;

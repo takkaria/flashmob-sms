@@ -18,11 +18,22 @@ function abort(text: string) {
   process.exit(1);
 }
 
+function checkEnv() {
+  const REQUIRED_ENVS = [
+    "DATABASE_URL",
+    "TWILIO_FROM",
+    "TWILIO_ACCOUNT_SID",
+    "TWILIO_AUTH_TOKEN",
+  ];
+  for (const env of REQUIRED_ENVS) {
+    if (!process.env[env]) {
+      abort(`Need env var ${env}`);
+    }
+  }
+}
+
 const app = express();
 app.use(bodyParser.urlencoded({ extended: false }));
-
-if (!process.env["ALLOWED_NUMBERS"]) process.env["ALLOWED_NUMBERS"] = "";
-if (!process.env["API_KEY"]) abort("No API key specified - aborting");
 
 // Enabled as we're deploying on Heroku
 app.set("trust proxy", true);
@@ -32,16 +43,12 @@ app.use(ipCheck);
 
 // ====== App code
 
-function userMessage(req: Request, res: Response) {
+async function userMessage(req: Request, res: Response) {
   if (messageStore.isOn()) {
-    let message = {
-      to: req.body.from,
-      content: messageStore.getMessage(),
-    };
-
-    numberStore.saveNumber(req.body.from);
-
-    sendSMS(message).then(() => res.status(200).send("Message replied to"));
+    const recipient = req.body.from;
+    numberStore.saveNumber(recipient);
+    await sendSMS(recipient, messageStore.getMessage());
+    res.status(200).send("Message replied to");
   } else {
     debug(`Message from ${req.body.from} ignored as responses turned off.`);
     res.status(200).send("Message ignored");
@@ -56,21 +63,24 @@ app.get("/", function (req: Request, res: Response) {
   res.status(200).send("Service up");
 });
 
-app.post("/", function (req: Request, res: Response) {
+app.post("/", async function (req: Request, res: Response) {
   debug("Received message from " + req.body.from);
   debug("Message body: ", req.body.content);
 
-  if (checkAccess(req.body.from)) {
-    adminMessage(req, res);
-  } else {
-    userMessage(req, res);
+  try {
+    if (checkAccess(req.body.from)) {
+      await adminMessage(req, res);
+    } else {
+      await userMessage(req, res);
+    }
+  } catch (err) {
+    res.status(500).send(`Server error ${err}`);
+    return;
   }
 });
 
-// ====== Either run (if run directly) or export as a module
-
-async function start() {
-  const port = parseInt(process.env["PORT"] ?? "", 10) || 3000;
+export async function server(port: number): Promise<void> {
+  checkEnv();
   const instance = await initDb();
   setInstance(instance);
   const all = await Promise.all([
@@ -80,12 +90,11 @@ async function start() {
   ]);
 
   return new Promise((resolve, reject) => {
-    app.listen(port, () => resolve(null));
+    app.listen(port, () => resolve());
   });
 }
 
 if (require.main === module) {
-  start().then((port) => console.log("Listening on port " + port));
+  const port = parseInt(process.env["PORT"] ?? "", 10) || 3000;
+  server(port).then(() => console.log("Listening on port " + port));
 }
-
-module.exports = start;

@@ -1,4 +1,4 @@
-const db = require("./db");
+import { instance } from './db';
 import Debug from "debug";
 const debug = Debug("flashmob-sms:number-store");
 
@@ -8,7 +8,7 @@ function dbSync() {
   timeoutID = null;
 
   try {
-    db.instance.numbers.insert({ data: JSON.stringify(storedNumbers) });
+    instance['numbers'].insert({ data: JSON.stringify(storedNumbers) });
   } catch (err) {
     debug("DB: error updating phone numbers", err);
     return;
@@ -41,7 +41,7 @@ const fns = {
   async restore(): Promise<void> {
     let result;
     try {
-      result = await db.instance.currentNumbers();
+      result = await instance['currentNumbers']();
     } catch (err) {
       debug("DB: error restoring numbers", err);
       return;
@@ -57,7 +57,7 @@ const fns = {
     storedNumbers = [];
 
     try {
-      db.instance.numbers.destroy({});
+      instance['numbers'].destroy({});
     } catch (err) {
       debug("DB: Error deleting phone numbers", err);
     }

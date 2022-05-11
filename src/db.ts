@@ -1,6 +1,6 @@
 import massive from "massive";
 
-export let instance: massive.Database | null = null;
+export let instance: massive.Database;
 export const setInstance = (inst: massive.Database) => (instance = inst);
 export const init = async () => {
   const params: {
