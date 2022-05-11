@@ -3,6 +3,7 @@ import type { Request, Response } from "express";
 import bodyParser from "body-parser";
 import { z } from "zod";
 import twilio from "twilio";
+const VoiceResponse = require("twilio").twiml.VoiceResponse;
 
 import { setInstance, init as initDb } from "./db";
 import numberStore from "./number-store";
@@ -91,6 +92,41 @@ app.post(
       res.status(500).send(`Server error ${err}`);
       return;
     }
+  }
+);
+
+app.post(
+  "/voice",
+  twilio.webhook({ validate: shouldValidate }),
+
+  async function (req: Request, res: Response) {
+    // Twilio Voice URL - receives incoming calls from Twilio
+    const response = new VoiceResponse();
+
+    response.say(
+      `Tin Pan Sound is a new line of sound that is inspired by the late 20th
+      century acoustic guitar with an orchestral approach. The line was designed
+      to emphasize the harmoniousness of the sound. While the bass sounds are
+      played through a different rhythm, they are not always perfect.
+
+      Text this number to get updates. Text this number to get updates.
+      Text this number to get updates. Text this number to get updates.
+      Text this number to get updates. Text this number to get updates.
+      Text this number to get updates. Text this number to get updates.
+
+      Una mattina mi son svegliato.
+      O bella ciao, bella ciao, bella ciao ciao ciao!
+      Una mattina mi son svegliato.
+      Eo ho trovato l'invasor.
+
+      O partigiano porta mi via.
+      O bella ciao, bella ciao, bella ciao ciao ciao!
+      O partigiano porta mi via.
+      Che mi sento di morir.`
+    );
+
+    res.set("Content-Type", "text/xml");
+    res.send(response.toString());
   }
 );
 
