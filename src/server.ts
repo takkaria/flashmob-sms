@@ -1,6 +1,8 @@
 import express from "express";
 import type { Request, Response } from "express";
 import bodyParser from "body-parser";
+import { z } from "zod";
+
 import { setInstance, init as initDb } from "./db";
 import ipCheck from "./ip-check";
 import numberStore from "./number-store";
@@ -43,15 +45,18 @@ app.use(ipCheck);
 
 // ====== App code
 
-async function userMessage(req: Request, res: Response) {
+async function userMessage(
+  input: { From: string; Body: string },
+  res: Response
+) {
   if (messageStore.isOn()) {
-    const recipient = req.body.from;
+    const recipient = input.From;
     numberStore.saveNumber(recipient);
     await sendSMS(recipient, messageStore.getMessage());
-    res.status(200).send("Message replied to");
+    res.status(200).send("<Response></Response>");
   } else {
-    debug(`Message from ${req.body.from} ignored as responses turned off.`);
-    res.status(200).send("Message ignored");
+    debug(`Message from ${input.From} ignored as responses turned off.`);
+    res.status(200).send("<Response></Response>");
   }
 }
 
@@ -63,15 +68,22 @@ app.get("/", function (req: Request, res: Response) {
   res.status(200).send("Service up");
 });
 
-app.post("/", async function (req: Request, res: Response) {
-  debug("Received message from " + req.body.from);
-  debug("Message body: ", req.body.content);
+const bodySchema = z.object({
+  From: z.string(),
+  Body: z.string(),
+});
+
+app.post("/sms", async function (req: Request, res: Response) {
+  const input = bodySchema.parse(req.body);
+
+  debug("Received message from " + input.From);
+  debug("Message body: ", input.Body);
 
   try {
-    if (checkAccess(req.body.from)) {
-      await adminMessage(req, res);
+    if (checkAccess(input.From)) {
+      await adminMessage(input, res);
     } else {
-      await userMessage(req, res);
+      await userMessage(input, res);
     }
   } catch (err) {
     res.status(500).send(`Server error ${err}`);

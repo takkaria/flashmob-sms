@@ -13,23 +13,12 @@ type ParsedMessage = {
   content: string;
 };
 
-function parseMessage(
-  message: string,
-  keyword: string | null
-): ParsedMessage | null {
+function parseMessage(message: string): ParsedMessage | null {
   if (message === "") {
     return null;
   }
 
   let splat = message.split(" ");
-
-  // If we have keyword, it means the message is of the form
-  // 'keyword <command>'.  So we ignore the first token in the string
-  // and instead jump ahead.
-  if (keyword) {
-    splat.shift();
-  }
-
   return {
     keyword: splat.shift()?.toLowerCase() ?? "",
     content: splat.join(" "),
@@ -94,24 +83,13 @@ const actions: ActionTable = {
   },
 };
 
-const bodySchema = z.object({
-  from: z.string(),
-  keyword: z
-    .string()
-    .optional()
-    .transform((v) => v ?? ""),
-  content: z
-    .string()
-    .optional()
-    .transform((v) => v ?? ""),
-});
-
-export async function adminMessage(req: Request, res: Response): Promise<void> {
-  const input = bodySchema.parse(req.body);
-
-  const parsedMsg = parseMessage(input.content, input.keyword);
+export async function adminMessage(
+  input: { From: string; Body: string },
+  res: Response
+): Promise<void> {
+  const parsedMsg = parseMessage(input.Body);
   if (!parsedMsg) {
-    res.status(200).send("Unparsable message received");
+    res.status(200).send("<Response></Response>");
     return;
   }
 
@@ -119,8 +97,8 @@ export async function adminMessage(req: Request, res: Response): Promise<void> {
   const action = actions?.[keyword];
 
   await sendSMS(
-    input.from,
+    input.From,
     action ? await action(parsedMsg) : "Command not recognised"
   );
-  res.status(200).send("Admin message received & replied to");
+  res.status(200).send("<Response></Response>");
 }

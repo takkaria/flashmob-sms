@@ -9,7 +9,7 @@ nock.enableNetConnect("localhost");
 // ====== App init
 
 const appPort = 4000;
-const appUrl = `http://localhost:${appPort}/`;
+const appUrl = `http://localhost:${appPort}/sms`;
 
 const normalNumber = "44NORMAL";
 const adminNumber = "44ADMIN";
@@ -29,7 +29,6 @@ before(function (done) {
 type SendSMSParams = {
   from?: string;
   content?: string;
-  keyword?: string;
   statusCode?: number;
   response?: nock.Scope[] | nock.Scope;
   noResponse?: nock.Scope;
@@ -45,9 +44,8 @@ async function sendSMS(params: SendSMSParams): Promise<void> {
     method: "POST",
     // @ts-ignore
     body: new URLSearchParams({
-      from: params.from ?? normalNumber,
-      content: params.content ?? "",
-      keyword: params.keyword ?? "",
+      From: params.from ?? normalNumber,
+      Body: params.content ?? "",
     }),
   });
 
@@ -182,16 +180,6 @@ describe("Testing admin commands.  Assume all following sent from admin number",
       });
     });
 
-    // This test is identical to the one above except with a 'keyword' added
-    it("(with keyword) I should receive confirmation of change", function () {
-      return sendSMS({
-        from: adminNumber,
-        keyword: "keyword",
-        content: "keyword on",
-        response: expectSMS({ Body: /on/ }),
-      });
-    });
-
     it("sending another SMS (from non admin number) should get me a message", function () {
       return sendSMS({
         from: normalNumber,
@@ -233,7 +221,7 @@ describe("Testing admin commands.  Assume all following sent from admin number",
     });
   });
 
-  describe('If I send "update Testing 1234" (no keyword)', function () {
+  describe('If I send "update Testing 1234"', function () {
     const newMessage = "Testing 1234";
 
     it("(wipe data first)", function () {
@@ -268,26 +256,7 @@ describe("Testing admin commands.  Assume all following sent from admin number",
     });
   });
 
-  describe('If I send "update 1234" (with keyword)', function () {
-    it("(wipe data first)", function () {
-      return sendSMS({
-        from: adminNumber,
-        content: "wipe",
-        response: expectSMS(),
-      });
-    });
-
-    it("I should receive confirmation of change", function () {
-      return sendSMS({
-        from: adminNumber,
-        keyword: "keyword",
-        content: "keyword update 1234",
-        response: expectSMS({ Body: /Message updated/ }),
-      });
-    });
-  });
-
-  describe('If I send "update" (and nothing else) from an admin number (no keyword)', function () {
+  describe('If I send "update" (and nothing else) from an admin number', function () {
     it("I should receive an error", function () {
       return sendSMS({
         from: adminNumber,
@@ -298,6 +267,22 @@ describe("Testing admin commands.  Assume all following sent from admin number",
   });
 
   describe('If I send "update <180 characters>" from an admin number', function () {
+    it("(wipe data first)", function () {
+      return sendSMS({
+        from: adminNumber,
+        content: "wipe",
+        response: expectSMS(),
+      });
+    });
+
+    it("(turn on the responder again)", function () {
+      return sendSMS({
+        from: adminNumber,
+        content: "on",
+        response: expectSMS(),
+      });
+    });
+
     it("I should be told it will use 2 SMSes when distributed", function () {
       let long = "x".repeat(180);
       return sendSMS({

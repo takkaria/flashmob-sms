@@ -24,8 +24,7 @@ function checkIP(ip: string) {
 export default function ipCheck(req: Request, res: Response, next: () => void) {
   if (process.env["RESTRICT_IP"] === "1" && !checkIP(req.ip)) {
     debug("IP address " + req.ip + " rejected.");
-    res.status(401);
-    res.send("Access denied");
+    res.status(401).send("Access denied");
   } else {
     next();
   }
