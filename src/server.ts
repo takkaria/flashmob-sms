@@ -4,7 +4,6 @@ import bodyParser from "body-parser";
 import { z } from "zod";
 
 import { setInstance, init as initDb } from "./db";
-import ipCheck from "./ip-check";
 import numberStore from "./number-store";
 import messageStore from "./message-store";
 import { sendSMS } from "./send-sms";
@@ -39,9 +38,6 @@ app.use(bodyParser.urlencoded({ extended: false }));
 
 // Enabled as we're deploying on Heroku
 app.set("trust proxy", true);
-
-// Add IP restrictor
-app.use(ipCheck);
 
 // ====== App code
 
