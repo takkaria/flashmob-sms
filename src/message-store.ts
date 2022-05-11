@@ -3,7 +3,7 @@ import Debug from "debug";
 const debug = Debug("flashmob-sms:message-store");
 import type { Request, Response } from "express";
 
-let storedMessage = "Testing";
+let storedMessage = "";
 let messageOn = false;
 
 function dbState(state: boolean) {
