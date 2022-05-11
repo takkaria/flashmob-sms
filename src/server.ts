@@ -2,7 +2,7 @@ import express from "express";
 import type { Request, Response } from "express";
 import bodyParser from "body-parser";
 import { z } from "zod";
-import twilio from 'twilio';
+import twilio from "twilio";
 
 import { setInstance, init as initDb } from "./db";
 import numberStore from "./number-store";
@@ -65,30 +65,34 @@ app.get("/", function (req: Request, res: Response) {
   res.status(200).send("Service up");
 });
 
-const shouldValidate = process.env['ENV'] === 'production';
+const shouldValidate = process.env["ENV"] === "production";
 
 const bodySchema = z.object({
   From: z.string(),
   Body: z.string(),
 });
 
-app.post("/sms", twilio.webhook({ validate: shouldValidate }), async function (req: Request, res: Response) {
-  const input = bodySchema.parse(req.body);
+app.post(
+  "/sms",
+  twilio.webhook({ validate: shouldValidate }),
+  async function (req: Request, res: Response) {
+    const input = bodySchema.parse(req.body);
 
-  debug("Received message from " + input.From);
-  debug("Message body: ", input.Body);
+    debug("Received message from " + input.From);
+    debug("Message body: ", input.Body);
 
-  try {
-    if (isAdmin(input.From)) {
-      await adminMessage(input, res);
-    } else {
-      await userMessage(input, res);
+    try {
+      if (isAdmin(input.From)) {
+        await adminMessage(input, res);
+      } else {
+        await userMessage(input, res);
+      }
+    } catch (err) {
+      res.status(500).send(`Server error ${err}`);
+      return;
     }
-  } catch (err) {
-    res.status(500).send(`Server error ${err}`);
-    return;
   }
-});
+);
 
 export async function server(port: number): Promise<void> {
   debug("Starting app...");
