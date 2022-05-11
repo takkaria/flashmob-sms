@@ -94,22 +94,6 @@ function expectSMS(param: ExpectedParams = {}): nock.Scope {
 
 // ====== Testing proper
 
-describe("If I post to the endpoint", function () {
-  it("(assuming RESTRICT_IP=1) I should receive an error", function () {
-    process.env["RESTRICT_IP"] = "1";
-    return sendSMS({
-      statusCode: 401,
-    });
-  });
-
-  it("(assuming RESTRICT_IP=0) I should not receive an error", function () {
-    process.env["RESTRICT_IP"] = "0";
-    return sendSMS({
-      statusCode: 200,
-    });
-  });
-});
-
 describe("Testing admin commands.  Assume all following sent from admin number", function () {
   afterEach(function () {
     nock.cleanAll();
