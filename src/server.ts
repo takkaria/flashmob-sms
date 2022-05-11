@@ -91,14 +91,15 @@ app.post("/sms", twilio.webhook({ validate: shouldValidate }), async function (r
 });
 
 export async function server(port: number): Promise<void> {
+  debug("Starting app...");
   checkEnv();
   const instance = await initDb();
   setInstance(instance);
-  const all = await Promise.all([
-    numberStore.restore,
-    messageStore.restoreStatus,
-    messageStore.restoreMessage,
-  ]);
+  debug("Restoring stuff...");
+
+  await numberStore.restore();
+  await messageStore.restoreStatus();
+  await messageStore.restoreMessage();
 
   return new Promise((resolve, reject) => {
     app.listen(port, () => resolve());

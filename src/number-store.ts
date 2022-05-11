@@ -39,11 +39,13 @@ const fns = {
   },
 
   async restore(): Promise<void> {
+    debug("Restoring numbers...");
+
     let result;
     try {
       result = await instance['currentNumbers']();
     } catch (err) {
-      debug("DB: error restoring numbers", err);
+      debug("DB: error restoring numbers");
       return;
     }
 

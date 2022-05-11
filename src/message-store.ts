@@ -46,9 +46,11 @@ const messageStore = {
   },
 
   async restoreStatus(): Promise<void> {
+    debug("Restoring status...");
+
     let result;
     try {
-      result = instance['currentStatus']();
+      result = await instance['currentStatus']();
     } catch (err) {
       debug("DB: error restoring status", err);
     }
@@ -60,9 +62,11 @@ const messageStore = {
   },
 
   async restoreMessage(): Promise<void> {
+    debug("Restoring message...");
+
     let result;
     try {
-      result = instance['currentMessage']();
+      result = await instance['currentMessage']();
     } catch (err) {
       debug("DB: error restoring message", err);
     }
